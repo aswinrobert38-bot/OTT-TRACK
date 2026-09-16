@@ -2,15 +2,11 @@ import os
 import requests
 
 
-# =========================================================
-# TMDB CONFIGURATION
-# =========================================================
-
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
 
 # =========================================================
-# CUSTOM ERROR
+# TMDB ERROR
 # =========================================================
 
 class TMDBError(Exception):
@@ -18,7 +14,7 @@ class TMDBError(Exception):
 
 
 # =========================================================
-# GET TOKEN
+# TOKEN
 # =========================================================
 
 def get_token():
@@ -44,17 +40,15 @@ def get_headers():
 
 
 # =========================================================
-# GENERIC TMDB REQUEST
+# REQUEST
 # =========================================================
 
 def _request(endpoint, params=None):
 
-    url = TMDB_BASE_URL + endpoint
-
     try:
 
         response = requests.get(
-            url,
+            TMDB_BASE_URL + endpoint,
             headers=get_headers(),
             params=params,
             timeout=20
@@ -69,17 +63,15 @@ def _request(endpoint, params=None):
     if response.status_code != 200:
 
         try:
-            error_data = response.json()
-            message = error_data.get(
+            data = response.json()
+            message = data.get(
                 "status_message",
                 "TMDB request failed"
             )
         except Exception:
             message = "TMDB request failed"
 
-        raise TMDBError(
-            message
-        )
+        raise TMDBError(message)
 
     return response.json()
 
@@ -93,21 +85,16 @@ def normalize_movie(movie):
     poster_path = movie.get("poster_path")
 
     if poster_path:
-
         poster_url = (
             "https://image.tmdb.org/t/p/w500"
             + poster_path
         )
-
     else:
-
         poster_url = None
 
     return {
         "id": movie.get("id"),
-        "title": movie.get("title")
-        or movie.get("name")
-        or "Unknown",
+        "title": movie.get("title", "Unknown"),
         "overview": movie.get("overview", ""),
         "poster_path": poster_path,
         "poster_url": poster_url,
@@ -128,24 +115,15 @@ def normalize_movie(movie):
 
 
 # =========================================================
-# SEARCH MOVIES
+# SEARCH
 # =========================================================
 
 def search_movies(query, page=1):
 
-    if not query or not query.strip():
-
-        return {
-            "page": 1,
-            "results": [],
-            "total_pages": 0,
-            "total_results": 0
-        }
-
     data = _request(
         "/search/movie",
         {
-            "query": query.strip(),
+            "query": query,
             "page": page,
             "include_adult": False
         }
@@ -252,12 +230,10 @@ def get_upcoming(page=1):
 
 def get_movie_details(movie_id):
 
-    data = _request(
+    return _request(
         "/movie/" + str(movie_id),
         {
             "append_to_response":
                 "credits,videos,watch/providers"
         }
     )
-
-    return data
