@@ -1,0 +1,2 @@
+-- PostgreSQL schema will be implemented in Stage 3.
+-- Kept empty in Stage 1 so the prototype remains UI-only.
