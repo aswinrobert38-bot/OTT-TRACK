@@ -544,7 +544,7 @@ with st.sidebar:
 
     if get_token():
 
-        st.success("TMDB Connected")
+        st.success("DB CONNECTED")
 
     else:
 
