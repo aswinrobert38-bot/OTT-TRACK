@@ -127,7 +127,7 @@ def get_movie_languages(movie):
 # MOVIE CARD
 # =========================================================
 
-def movie_card(movie):
+def movie_card(movie, key_suffix=""):
     movie_id = movie.get("id")
 
     title = get_title(movie)
