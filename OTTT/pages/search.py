@@ -18,17 +18,46 @@ def get_results(data):
     return []
 
 
-def display_movie(movie):
+def get_movie_title(movie):
 
-    movie_id = movie.get("id")
-
-    title = (
+    return (
         movie.get("title")
         or movie.get("name")
         or "Untitled"
     )
 
-    release_date = movie.get("release_date") or ""
+
+def get_movie_poster(movie):
+
+    poster = movie.get("poster_url")
+
+    if poster:
+        return poster
+
+    poster_path = movie.get("poster_path")
+
+    if poster_path:
+
+        return (
+            "https://image.tmdb.org/t/p/w500"
+            + poster_path
+        )
+
+    return None
+
+
+def movie_card(movie):
+
+    movie_id = movie.get("id")
+
+    title = get_movie_title(movie)
+
+    poster = get_movie_poster(movie)
+
+    release_date = (
+        movie.get("release_date")
+        or ""
+    )
 
     year = (
         release_date[:4]
@@ -36,37 +65,32 @@ def display_movie(movie):
         else "N/A"
     )
 
-    rating = movie.get("rating")
+    rating = movie.get(
+        "rating"
+    )
 
     if rating is None:
-        rating = movie.get("vote_average", 0)
+
+        rating = movie.get(
+            "vote_average"
+        )
 
     try:
+
         rating_text = str(
             round(float(rating), 1)
         )
+
     except Exception:
+
         rating_text = "N/A"
 
     language = (
-        movie.get("original_language")
+        movie.get(
+            "original_language"
+        )
         or "N/A"
     )
-
-    poster = movie.get("poster_url")
-
-    if not poster:
-
-        poster_path = movie.get(
-            "poster_path"
-        )
-
-        if poster_path:
-
-            poster = (
-                "https://image.tmdb.org/t/p/w500"
-                + poster_path
-            )
 
     # -----------------------------------------
     # CLICKABLE POSTER
@@ -74,20 +98,19 @@ def display_movie(movie):
 
     if poster and movie_id:
 
+        safe_title = html.escape(
+            title,
+            quote=True
+        )
+
+        poster_markdown = (
+            f'[![{safe_title}]'
+            f'({poster})]'
+            f'(?movie_id={movie_id})'
+        )
+
         st.markdown(
-            f"""
-            <a
-                href="?movie_id={movie_id}"
-                class="movie-poster-link"
-                title="{html.escape(title, quote=True)}"
-            >
-                <img
-                    src="{html.escape(poster, quote=True)}"
-                    class="movie-poster"
-                >
-            </a>
-            """,
-            unsafe_allow_html=True
+            poster_markdown
         )
 
     elif poster:
@@ -122,17 +145,25 @@ def display_movie(movie):
     )
 
     # -----------------------------------------
-    # INFORMATION
+    # META
     # -----------------------------------------
 
     st.markdown(
         f"""
         <div class="movie-card-meta">
+
             {html.escape(year)}
+
             <span>•</span>
-            {html.escape(language.upper())}
+
+            {html.escape(
+                str(language).upper()
+            )}
+
             <span>•</span>
+
             ★ {html.escape(rating_text)}
+
         </div>
         """,
         unsafe_allow_html=True
@@ -141,9 +172,27 @@ def display_movie(movie):
 
 def render_search():
 
-    # -----------------------------------------
-    # PAGE HEADER
-    # -----------------------------------------
+    # =========================================
+    # CHECK MOVIE CLICK
+    # =========================================
+
+    movie_id = st.query_params.get(
+        "movie_id"
+    )
+
+    if movie_id:
+
+        st.session_state.selected_movie_id = str(
+            movie_id
+        )
+
+        st.query_params.clear()
+
+        st.rerun()
+
+    # =========================================
+    # HEADER
+    # =========================================
 
     st.markdown(
         """
@@ -166,12 +215,12 @@ def render_search():
         unsafe_allow_html=True
     )
 
-    # -----------------------------------------
-    # SEARCH BOX
-    # -----------------------------------------
+    # =========================================
+    # SEARCH
+    # =========================================
 
     query = st.text_input(
-        "Search movie",
+        "Movie title",
         placeholder="Search for a movie...",
         key="search_page_query",
         label_visibility="collapsed"
@@ -188,8 +237,8 @@ def render_search():
                 </div>
 
                 <div class="search-empty-text">
-                    Try movie names such as Leo,
-                    Interstellar, Jailer or Vikram.
+                    Try Leo, Interstellar,
+                    Jailer, Vikram or any other movie.
                 </div>
 
             </div>
@@ -199,9 +248,9 @@ def render_search():
 
         return
 
-    # -----------------------------------------
-    # API SEARCH
-    # -----------------------------------------
+    # =========================================
+    # SEARCH API
+    # =========================================
 
     try:
 
@@ -216,19 +265,24 @@ def render_search():
         st.error(str(error))
         return
 
-    # -----------------------------------------
-    # RESULT COUNT
-    # -----------------------------------------
+    # =========================================
+    # RESULTS HEADER
+    # =========================================
 
     st.markdown(
         f"""
         <div class="search-result-heading">
 
             <div>
+
                 <span>RESULTS FOR</span>
+
                 <strong>
-                    {html.escape(query.strip())}
+                    {html.escape(
+                        query.strip()
+                    )}
                 </strong>
+
             </div>
 
             <div>
@@ -248,9 +302,9 @@ def render_search():
 
         return
 
-    # -----------------------------------------
+    # =========================================
     # MOVIES
-    # -----------------------------------------
+    # =========================================
 
     columns = st.columns(
         6,
@@ -263,4 +317,4 @@ def render_search():
 
         with columns[index % 6]:
 
-            display_movie(movie)
+            movie_card(movie)
