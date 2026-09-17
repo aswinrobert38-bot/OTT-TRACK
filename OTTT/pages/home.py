@@ -1,3 +1,4 @@
+import html
 import streamlit as st
 
 from services.tmdb_service import (
@@ -15,7 +16,6 @@ from services.tmdb_service import (
 # =========================================================
 
 def get_results(data):
-
     if isinstance(data, dict):
         return data.get("results", [])
 
@@ -26,7 +26,6 @@ def get_results(data):
 
 
 def get_title(movie):
-
     return (
         movie.get("title")
         or movie.get("name")
@@ -35,7 +34,6 @@ def get_title(movie):
 
 
 def get_poster(movie):
-
     poster = movie.get("poster_url")
 
     if poster:
@@ -53,7 +51,6 @@ def get_poster(movie):
 
 
 def get_year(movie):
-
     release_date = (
         movie.get("release_date")
         or movie.get("first_air_date")
@@ -67,7 +64,6 @@ def get_year(movie):
 
 
 def get_rating(movie):
-
     rating = movie.get("rating")
 
     if rating is None:
@@ -77,16 +73,12 @@ def get_rating(movie):
         return "N/A"
 
     try:
-        return str(
-            round(float(rating), 1)
-        )
-
+        return str(round(float(rating), 1))
     except Exception:
         return "N/A"
 
 
 def get_language(movie):
-
     language = (
         movie.get("original_language")
         or movie.get("language")
@@ -98,24 +90,51 @@ def get_language(movie):
     return str(language).upper()
 
 
+def get_movie_languages(movie):
+    """
+    Get actual language metadata when it is available.
+    Does not invent provider-specific languages.
+    """
+
+    languages = movie.get("spoken_languages")
+
+    if isinstance(languages, list):
+        result = []
+
+        for item in languages:
+            if isinstance(item, dict):
+                name = (
+                    item.get("english_name")
+                    or item.get("name")
+                    or item.get("iso_639_1")
+                )
+
+                if name and name not in result:
+                    result.append(str(name))
+
+        if result:
+            return result
+
+    original_language = movie.get("original_language")
+
+    if original_language:
+        return [str(original_language).upper()]
+
+    return []
+
+
 # =========================================================
 # MOVIE CARD
 # =========================================================
 
 def movie_card(movie):
-
     movie_id = movie.get("id")
 
     title = get_title(movie)
-
     poster = get_poster(movie)
-
     year = get_year(movie)
-
     rating = get_rating(movie)
-
     language = get_language(movie)
-
 
     # -----------------------------------------------------
     # POSTER
@@ -123,8 +142,20 @@ def movie_card(movie):
 
     if poster and movie_id:
 
+        safe_title = html.escape(
+            str(title),
+            quote=True
+        )
+
+        safe_poster = html.escape(
+            str(poster),
+            quote=True
+        )
+
+        # Markdown image link.
+        # No raw HTML is displayed to the user.
         st.markdown(
-            f"[![{title}]({poster})](?movie_id={movie_id})"
+            f"[![{safe_title}]({safe_poster})](?movie_id={movie_id})"
         )
 
     elif poster:
@@ -140,7 +171,6 @@ def movie_card(movie):
             "Poster unavailable"
         )
 
-
     # -----------------------------------------------------
     # TITLE
     # -----------------------------------------------------
@@ -148,7 +178,6 @@ def movie_card(movie):
     st.markdown(
         f"**{title}**"
     )
-
 
     # -----------------------------------------------------
     # META
@@ -173,21 +202,14 @@ def show_movies(
     if not movies:
         return
 
+    st.subheader(title)
 
-    st.subheader(
-        title
-    )
-
-    st.caption(
-        description
-    )
-
+    st.caption(description)
 
     columns = st.columns(
         6,
         gap="medium"
     )
-
 
     for index, movie in enumerate(
         movies[:limit]
@@ -195,9 +217,7 @@ def show_movies(
 
         with columns[index % 6]:
 
-            movie_card(
-                movie
-            )
+            movie_card(movie)
 
 
 # =========================================================
@@ -219,7 +239,6 @@ def show_search_results(
         f'{len(movies)} result(s) for "{query}"'
     )
 
-
     if not movies:
 
         st.info(
@@ -228,12 +247,10 @@ def show_search_results(
 
         return
 
-
     columns = st.columns(
         6,
         gap="medium"
     )
-
 
     for index, movie in enumerate(
         movies[:24]
@@ -241,8 +258,53 @@ def show_search_results(
 
         with columns[index % 6]:
 
-            movie_card(
-                movie
+            movie_card(movie)
+
+
+# =========================================================
+# LANGUAGE SECTION
+# =========================================================
+
+def show_available_languages():
+
+    st.divider()
+
+    st.subheader(
+        "Available Languages"
+    )
+
+    st.caption(
+        "Browse the movie catalogue by language."
+    )
+
+    languages = [
+        "Tamil",
+        "Telugu",
+        "Malayalam",
+        "Kannada",
+        "Hindi",
+        "English",
+        "Bengali",
+        "Marathi",
+        "Punjabi",
+        "Gujarati",
+        "Bhojpuri",
+        "Odia",
+    ]
+
+    language_columns = st.columns(
+        4,
+        gap="medium"
+    )
+
+    for index, language in enumerate(
+        languages
+    ):
+
+        with language_columns[index % 4]:
+
+            st.markdown(
+                f"**{language}**"
             )
 
 
@@ -251,6 +313,25 @@ def show_search_results(
 # =========================================================
 
 def render_home():
+
+    # =====================================================
+    # HANDLE MOVIE SELECTION
+    # =====================================================
+
+    movie_id = st.query_params.get(
+        "movie_id"
+    )
+
+    if movie_id:
+
+        st.session_state.selected_movie_id = str(
+            movie_id
+        )
+
+        st.query_params.clear()
+
+        st.rerun()
+
 
     # =====================================================
     # HEADER
@@ -266,7 +347,7 @@ def render_home():
 
     st.caption(
         "Discover movies, explore complete details, "
-        "and find where to watch them in India."
+        "and find where they are available."
     )
 
 
@@ -279,11 +360,14 @@ def render_home():
         clear_on_submit=False
     ):
 
-        search_col, button_col = st.columns(
-            [6, 1],
+        search_col, language_col, button_col = st.columns(
+            [5.2, 1.5, 1.1],
             vertical_alignment="bottom"
         )
 
+        # -------------------------------------------------
+        # SEARCH INPUT
+        # -------------------------------------------------
 
         with search_col:
 
@@ -296,6 +380,35 @@ def render_home():
                 label_visibility="collapsed"
             )
 
+        # -------------------------------------------------
+        # LANGUAGE FILTER
+        # -------------------------------------------------
+
+        with language_col:
+
+            language_filter = st.selectbox(
+                "Language",
+                [
+                    "All Languages",
+                    "Tamil",
+                    "Telugu",
+                    "Malayalam",
+                    "Kannada",
+                    "Hindi",
+                    "English",
+                    "Bengali",
+                    "Marathi",
+                    "Punjabi",
+                    "Gujarati",
+                    "Bhojpuri",
+                    "Odia",
+                ],
+                label_visibility="collapsed"
+            )
+
+        # -------------------------------------------------
+        # SEARCH BUTTON
+        # -------------------------------------------------
 
         with button_col:
 
@@ -321,8 +434,32 @@ def render_home():
 
             try:
 
+                selected_language = None
+
+                if language_filter != "All Languages":
+
+                    language_codes = {
+                        "Tamil": "ta",
+                        "Telugu": "te",
+                        "Malayalam": "ml",
+                        "Kannada": "kn",
+                        "Hindi": "hi",
+                        "English": "en",
+                        "Bengali": "bn",
+                        "Marathi": "mr",
+                        "Punjabi": "pa",
+                        "Gujarati": "gu",
+                        "Bhojpuri": "hi",
+                        "Odia": "or",
+                    }
+
+                    selected_language = language_codes.get(
+                        language_filter
+                    )
+
                 data = search_movies(
-                    query.strip()
+                    query.strip(),
+                    language=selected_language
                 )
 
                 movies = get_results(
@@ -401,7 +538,7 @@ def render_home():
 
         show_movies(
             "Popular Movies",
-            "Popular titles from TMDB.",
+            "Popular movie titles from TMDB.",
             popular,
             6
         )
@@ -441,89 +578,25 @@ def render_home():
     # AVAILABLE LANGUAGES
     # =====================================================
 
-    st.divider()
-
-    st.subheader(
-        "Available Languages"
-    )
-
-    st.caption(
-        "Languages represented in the movie catalogue."
-    )
-
-
-    languages = [
-        "Tamil",
-        "Telugu",
-        "Malayalam",
-        "Kannada",
-        "Hindi",
-        "English",
-        "Bengali",
-        "Marathi",
-        "Punjabi",
-        "Gujarati",
-        "Bhojpuri",
-        "Odia",
-    ]
-
-
-    language_columns = st.columns(
-        4,
-        gap="medium"
-    )
-
-
-    for index, language in enumerate(
-        languages
-    ):
-
-        with language_columns[index % 4]:
-
-            st.markdown(
-                f"**{language}**"
-            )
+    show_available_languages()
 
 
     # =====================================================
-    # AVAILABLE OTT PLATFORMS
+    # OTT AVAILABILITY INFORMATION
     # =====================================================
 
     st.divider()
 
     st.subheader(
-        "Available OTT Platforms"
+        "OTT Availability"
     )
 
     st.caption(
-        "Platforms returned by TMDB for India-specific availability."
+        "Movie availability varies by country and platform. "
+        "The movie details page shows the provider data returned by TMDB."
     )
 
-
-    platforms = [
-        "Netflix",
-        "Prime Video",
-        "JioHotstar",
-        "SonyLIV",
-        "ZEE5",
-        "Sun NXT",
-        "Aha",
-        "Apple TV",
-    ]
-
-
-    platform_columns = st.columns(
-        4,
-        gap="medium"
+    st.info(
+        "Select a movie poster to view its available streaming, "
+        "rental, and purchase platforms."
     )
-
-
-    for index, platform in enumerate(
-        platforms
-    ):
-
-        with platform_columns[index % 4]:
-
-            st.markdown(
-                f"**{platform}**"
-            )
