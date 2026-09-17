@@ -13,6 +13,15 @@ def render_movie_details(movie_id):
     # -------------------------
     # Back Button
     # -------------------------
+    if st.button("← Back", key="back_movie"):
+
+    st.session_state.selected_movie_id = None
+
+    st.session_state.page = "home"
+
+    st.session_state.poster_version += 1
+
+    st.rerun()
 
     if st.button(
     "← Back",
