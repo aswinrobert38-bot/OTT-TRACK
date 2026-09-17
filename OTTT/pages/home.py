@@ -136,7 +136,7 @@ def render_home():
         <div class="hero">
 
             <div class="hero-title">
-                OTTTrack
+                ReelRoute
             </div>
 
             <div class="hero-text">
