@@ -10,7 +10,7 @@ from pages.movie_details import render_movie_details
 
 
 st.set_page_config(
-    page_title="OTTTrack",
+    page_title="ReelRoute",
     page_icon="🎬",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -503,7 +503,7 @@ if "selected_movie_id" not in st.session_state:
 with st.sidebar:
 
     st.markdown(
-        '<div class="brand">OTTTrack</div>',
+        '<div class="brand">ReelRoute</div>',
         unsafe_allow_html=True
     )
 
@@ -553,7 +553,7 @@ with st.sidebar:
 
     st.divider()
 
-    st.caption("OTTTrack")
+    st.caption("ReelRoute")
     st.caption("Discover • Explore • Watch")
 
 
