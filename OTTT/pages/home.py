@@ -1,6 +1,8 @@
 import html
 import streamlit as st
 
+from streamlit_image_coordinates import streamlit_image_coordinates
+
 from services.tmdb_service import (
     TMDBError,
     get_now_playing,
@@ -22,30 +24,69 @@ def show_movies(movies, section_name):
         st.info("No movies available.")
         return
 
+
     columns = st.columns(6, gap="medium")
+
 
     for index, movie in enumerate(movies[:12]):
 
         with columns[index % 6]:
 
             title = movie.get("title") or "Untitled"
+
             release_date = movie.get("release_date") or ""
+
             year = release_date[:4]
 
             rating = movie.get("rating", 0)
+
             poster = movie.get("poster_url")
+
             movie_id = movie.get("id")
 
-            # -------------------------
-            # Poster
-            # -------------------------
 
-            if poster:
+            # =================================================
+            # CLICKABLE POSTER
+            # =================================================
+
+            if poster and movie_id:
+
+                click_key = (
+                    "poster_"
+                    + str(st.session_state.poster_view_version)
+                    + "_"
+                    + str(section_name).replace(" ", "_")
+                    + "_"
+                    + str(movie_id)
+                    + "_"
+                    + str(index)
+                )
+
+
+                clicked = streamlit_image_coordinates(
+                    poster,
+                    key=click_key
+                )
+
+
+                if clicked is not None:
+
+                    st.session_state.selected_movie_id = str(
+                        movie_id
+                    )
+
+                    st.session_state.page = "home"
+
+                    st.rerun()
+
+
+            elif poster:
 
                 st.image(
                     poster,
                     use_container_width=True
                 )
+
 
             else:
 
@@ -58,25 +99,10 @@ def show_movies(movies, section_name):
                     unsafe_allow_html=True
                 )
 
-            # -------------------------
-            # Invisible movie button
-            # -------------------------
 
-            if movie_id:
-
-                clicked = st.button(
-                    "Open Movie",
-                    key="movie_" + str(section_name) + "_" + str(movie_id),
-                    use_container_width=True
-                )
-
-                if clicked:
-                    st.session_state.selected_movie_id = str(movie_id)
-                    st.rerun()
-
-            # -------------------------
-            # Movie title
-            # -------------------------
+            # =================================================
+            # MOVIE TITLE
+            # =================================================
 
             st.markdown(
                 '<div class="movie-title">' +
@@ -85,21 +111,30 @@ def show_movies(movies, section_name):
                 unsafe_allow_html=True
             )
 
-            # -------------------------
-            # Movie metadata
-            # -------------------------
+
+            # =================================================
+            # MOVIE METADATA
+            # =================================================
 
             metadata = []
 
+
             if year:
+
                 metadata.append(year)
 
+
             try:
+
                 metadata.append(
-                    "★ " + str(round(float(rating), 1))
+                    "★ " +
+                    str(round(float(rating), 1))
                 )
+
             except Exception:
+
                 pass
+
 
             st.markdown(
                 '<div class="movie-meta">' +
@@ -109,11 +144,15 @@ def show_movies(movies, section_name):
             )
 
 
+# =========================================================
+# HOME PAGE
+# =========================================================
+
 def render_home():
 
-    # -------------------------
-    # Hero
-    # -------------------------
+    # =====================================================
+    # HERO
+    # =====================================================
 
     st.markdown(
         """
@@ -132,11 +171,12 @@ def render_home():
         unsafe_allow_html=True
     )
 
+
     try:
 
-        # -------------------------
-        # Trending
-        # -------------------------
+        # =================================================
+        # TRENDING
+        # =================================================
 
         trending = get_trending()
 
@@ -145,9 +185,10 @@ def render_home():
             "Trending Movies"
         )
 
-        # -------------------------
-        # Now Playing
-        # -------------------------
+
+        # =================================================
+        # NOW PLAYING
+        # =================================================
 
         now_playing = get_now_playing()
 
@@ -156,9 +197,10 @@ def render_home():
             "Now Playing"
         )
 
-        # -------------------------
-        # Popular
-        # -------------------------
+
+        # =================================================
+        # POPULAR
+        # =================================================
 
         popular = get_popular()
 
@@ -166,6 +208,7 @@ def render_home():
             popular.get("results", []),
             "Popular Movies"
         )
+
 
     except TMDBError as error:
 
