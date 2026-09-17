@@ -22,43 +22,25 @@ def show_movies(movies, section_name):
         st.info("No movies available.")
         return
 
-    columns = st.columns(6)
+    columns = st.columns(6, gap="medium")
 
     for index, movie in enumerate(movies[:12]):
 
         with columns[index % 6]:
 
             title = movie.get("title") or "Untitled"
-
             release_date = movie.get("release_date") or ""
             year = release_date[:4]
 
             rating = movie.get("rating", 0)
-
             poster = movie.get("poster_url")
             movie_id = movie.get("id")
 
             # -------------------------
-            # Clickable Poster
+            # Poster
             # -------------------------
 
-            if poster and movie_id:
-
-                poster_html = f"""
-                <a href="?movie_id={movie_id}" class="poster-link">
-                    <img
-                        src="{html.escape(poster, quote=True)}"
-                        class="clickable-poster"
-                    >
-                </a>
-                """
-
-                st.markdown(
-                    poster_html,
-                    unsafe_allow_html=True
-                )
-
-            elif poster:
+            if poster:
 
                 st.image(
                     poster,
@@ -77,7 +59,23 @@ def show_movies(movies, section_name):
                 )
 
             # -------------------------
-            # Movie Title
+            # Invisible movie button
+            # -------------------------
+
+            if movie_id:
+
+                clicked = st.button(
+                    "Open Movie",
+                    key="movie_" + str(section_name) + "_" + str(movie_id),
+                    use_container_width=True
+                )
+
+                if clicked:
+                    st.session_state.selected_movie_id = str(movie_id)
+                    st.rerun()
+
+            # -------------------------
+            # Movie title
             # -------------------------
 
             st.markdown(
@@ -88,7 +86,7 @@ def show_movies(movies, section_name):
             )
 
             # -------------------------
-            # Movie Metadata
+            # Movie metadata
             # -------------------------
 
             metadata = []
@@ -98,8 +96,7 @@ def show_movies(movies, section_name):
 
             try:
                 metadata.append(
-                    "★ " +
-                    str(round(float(rating), 1))
+                    "★ " + str(round(float(rating), 1))
                 )
             except Exception:
                 pass
@@ -113,21 +110,6 @@ def show_movies(movies, section_name):
 
 
 def render_home():
-
-    # -------------------------
-    # Detect clicked movie
-    # -------------------------
-
-    movie_id = st.query_params.get("movie_id")
-
-    if movie_id:
-
-        st.session_state.selected_movie_id = movie_id
-
-        # Remove query parameter after storing the movie ID
-        st.query_params.clear()
-
-        st.rerun()
 
     # -------------------------
     # Hero
@@ -153,7 +135,7 @@ def render_home():
     try:
 
         # -------------------------
-        # Trending Movies
+        # Trending
         # -------------------------
 
         trending = get_trending()
@@ -175,7 +157,7 @@ def render_home():
         )
 
         # -------------------------
-        # Popular Movies
+        # Popular
         # -------------------------
 
         popular = get_popular()
