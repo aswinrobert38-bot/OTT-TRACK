@@ -14,40 +14,19 @@ def render_movie_details(movie_id):
     # Back Button
     # -------------------------
     if st.button("← Back", key="back_movie"):
+        st.session_state.selected_movie_id = None
+        st.session_state.page = "home"
+        st.rerun()
 
-    st.session_state.selected_movie_id = None
-
-    st.session_state.page = "home"
-
-    st.session_state.poster_version += 1
-
-    st.rerun()
-
-    if st.button(
-    "← Back",
-    key="back_movie"
-):
-
-    st.session_state.selected_movie_id = None
-
-    st.session_state.page = "home"
-
-    st.session_state.poster_view_version += 1
-
-    st.rerun()
     try:
-
         movie = get_movie_details(movie_id)
-
     except TMDBError as error:
-
         st.error(str(error))
         return
 
     # -------------------------
     # Movie Information
     # -------------------------
-
     title = movie.get("title") or "Untitled"
 
     overview = (
@@ -56,7 +35,6 @@ def render_movie_details(movie_id):
     )
 
     poster = movie.get("poster_url")
-
     backdrop = movie.get("backdrop_url")
 
     rating = movie.get("rating", 0)
@@ -84,9 +62,7 @@ def render_movie_details(movie_id):
     # -------------------------
     # Backdrop
     # -------------------------
-
     if backdrop:
-
         st.markdown(
             f"""
             <div class="movie-backdrop">
@@ -99,7 +75,6 @@ def render_movie_details(movie_id):
     # -------------------------
     # Title
     # -------------------------
-
     st.markdown(
         f"""
         <div class="details-title">
@@ -112,11 +87,9 @@ def render_movie_details(movie_id):
     # -------------------------
     # Basic Information
     # -------------------------
-
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-
         try:
             rating_value = str(round(float(rating), 1))
         except Exception:
@@ -128,21 +101,18 @@ def render_movie_details(movie_id):
         )
 
     with col2:
-
         st.metric(
             "Release",
             release_date
         )
 
     with col3:
-
         st.metric(
             "Language",
             original_language.upper()
         )
 
     with col4:
-
         runtime = movie.get("runtime")
 
         if runtime:
@@ -160,13 +130,11 @@ def render_movie_details(movie_id):
     # -------------------------
     # Main Content
     # -------------------------
-
     left, right = st.columns([1, 2])
 
     with left:
 
         if poster:
-
             st.markdown(
                 f"""
                 <img
@@ -178,7 +146,6 @@ def render_movie_details(movie_id):
             )
 
         else:
-
             st.markdown(
                 """
                 <div class="poster-fallback">
@@ -195,7 +162,6 @@ def render_movie_details(movie_id):
         st.write(overview)
 
         if genre_text:
-
             st.markdown(
                 "**Genre:** " +
                 html.escape(genre_text)
@@ -204,7 +170,6 @@ def render_movie_details(movie_id):
         tagline = movie.get("tagline")
 
         if tagline:
-
             st.markdown(
                 "**Tagline:** " +
                 html.escape(tagline)
@@ -213,13 +178,11 @@ def render_movie_details(movie_id):
     # -------------------------
     # Cast & Crew
     # -------------------------
-
     st.divider()
 
     credits = movie.get("credits", {})
 
     cast = credits.get("cast", [])
-
     crew = credits.get("crew", [])
 
     directors = [
@@ -232,7 +195,6 @@ def render_movie_details(movie_id):
     st.subheader("Cast & Crew")
 
     if directors:
-
         st.markdown(
             "**Director:** " +
             ", ".join(directors)
@@ -254,7 +216,6 @@ def render_movie_details(movie_id):
     # -------------------------
     # Trailer
     # -------------------------
-
     videos = movie.get("videos", {})
 
     video_results = videos.get(
@@ -270,7 +231,6 @@ def render_movie_details(movie_id):
             video.get("site") == "YouTube"
             and video.get("type") == "Trailer"
         ):
-
             trailer = video
             break
 
@@ -290,7 +250,6 @@ def render_movie_details(movie_id):
     # -------------------------
     # OTT Availability
     # -------------------------
-
     st.divider()
 
     st.subheader("Where to Watch in India")
@@ -325,9 +284,8 @@ def render_movie_details(movie_id):
         )
 
         # -------------------------
-        # Stream
+        # STREAM
         # -------------------------
-
         if flatrate:
 
             st.markdown(
@@ -410,9 +368,8 @@ def render_movie_details(movie_id):
                     )
 
         # -------------------------
-        # Rent
+        # RENT
         # -------------------------
-
         if rent:
 
             st.markdown(
@@ -470,9 +427,8 @@ def render_movie_details(movie_id):
                     )
 
         # -------------------------
-        # Buy
+        # BUY
         # -------------------------
-
         if buy:
 
             st.markdown(
@@ -529,6 +485,9 @@ def render_movie_details(movie_id):
                         unsafe_allow_html=True
                     )
 
+        # -------------------------
+        # No OTT Data
+        # -------------------------
         if not flatrate and not rent and not buy:
 
             st.info(
