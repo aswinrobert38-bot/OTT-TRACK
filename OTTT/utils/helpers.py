@@ -17,15 +17,20 @@ def rating_text(rating, votes=0):
 
 
 def movie_card(movie, key_suffix=""):
-    poster = movie.get("poster", "")
+    poster = movie.get("poster") or movie.get("poster_url", "")
+    movie_id = movie.get("id")
+
     if poster:
         st.image(poster, use_container_width=True)
     else:
-        st.markdown('<div class="poster-fallback"><span>NO<br>POSTER</span></div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="poster-fallback"><span>NO<br>POSTER</span></div>',
+            unsafe_allow_html=True
+        )
 
     title = safe_text(movie.get("title", "Untitled"))
     year = safe_text(movie.get("year", "TBD"))
-    language = safe_text(movie.get("language", "Unknown"))
+    language = safe_text(movie.get("language") or movie.get("original_language", "Unknown"))
     rating = rating_text(movie.get("rating"), movie.get("vote_count", 0))
 
     st.markdown(
@@ -33,6 +38,11 @@ def movie_card(movie, key_suffix=""):
         unsafe_allow_html=True,
     )
 
-    if st.button("View details", key=f"view_{movie.get('id')}_{key_suffix}", use_container_width=True):
-        st.session_state.selected_movie_id = movie.get("id")
-        st.rerun()
+    if movie_id is not None:
+        if st.button(
+            "View movie details",
+            key=f"view_{movie_id}_{key_suffix}",
+            use_container_width=True,
+        ):
+            st.session_state.open_movie_id = movie_id
+            st.rerun()
