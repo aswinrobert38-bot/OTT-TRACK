@@ -56,17 +56,29 @@ st.markdown(
        REMOVE STREAMLIT AUTO NAVIGATION
        ============================== */
 
-    [data-testid="stSidebarNav"] {
-        display: none;
+    div[data-testid="stSidebarNav"] {
+        display: none !important;
     }
 
 
     /* ==============================
-       HIDE SIDEBAR
+       SIDEBAR
        ============================== */
 
     section[data-testid="stSidebar"] {
-        display: none;
+        background:
+            linear-gradient(
+                180deg,
+                #11121a 0%,
+                #0a0b10 100%
+            );
+
+        border-right: 1px solid rgba(255,255,255,0.08);
+    }
+
+
+    section[data-testid="stSidebar"] > div {
+        padding-top: 1.5rem;
     }
 
 
@@ -177,9 +189,11 @@ st.markdown(
         position: absolute;
 
         width: 280px;
+
         height: 280px;
 
         right: -80px;
+
         top: -100px;
 
         background: #8b5cf6;
@@ -482,6 +496,30 @@ if "page" not in st.session_state:
 
 if "selected_movie_id" not in st.session_state:
     st.session_state.selected_movie_id = None
+
+
+# =========================================================
+# CUSTOM SIDEBAR
+# =========================================================
+
+with st.sidebar:
+
+    st.markdown(
+        '<div class="brand">ReelRoute</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        '<div class="brand-tagline">'
+        'Every Movie. Every Platform. One Place.'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    st.divider()
+
+    st.caption("ReelRoute")
+    st.caption("Discover • Explore • Watch")
 
 
 # =========================================================
