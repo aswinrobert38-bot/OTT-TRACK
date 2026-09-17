@@ -35,12 +35,12 @@ st.markdown(
     .stApp {
         background:
             radial-gradient(
-                circle at 10% 5%,
+                circle at 12% 8%,
                 rgba(118, 76, 255, .16),
                 transparent 30%
             ),
             radial-gradient(
-                circle at 90% 15%,
+                circle at 88% 18%,
                 rgba(0, 201, 255, .10),
                 transparent 28%
             ),
@@ -73,7 +73,8 @@ st.markdown(
                 #06070c 100%
             );
 
-        border-right: 1px solid rgba(135, 105, 255, .22);
+        border-right:
+            1px solid rgba(135, 105, 255, .22);
 
         box-shadow:
             8px 0 35px rgba(0, 0, 0, .25);
@@ -100,7 +101,8 @@ st.markdown(
                 rgba(11, 14, 22, .96)
             );
 
-        border: 1px solid rgba(126, 91, 255, .28);
+        border:
+            1px solid rgba(126, 91, 255, .28);
 
         border-radius: 18px;
 
@@ -115,7 +117,8 @@ st.markdown(
     [data-testid="stTextInput"] input {
         background: #0f121b !important;
 
-        border: 1px solid #292d3b !important;
+        border:
+            1px solid #292d3b !important;
 
         color: #ffffff !important;
 
@@ -128,7 +131,8 @@ st.markdown(
         border-color: #8b6cff !important;
 
         box-shadow:
-            0 0 0 1px rgba(139, 108, 255, .45) !important;
+            0 0 0 1px
+            rgba(139, 108, 255, .45) !important;
     }
 
     [data-testid="stFormSubmitButton"] button {
@@ -143,16 +147,16 @@ st.markdown(
                 #9b62ff
             );
 
-        border: 1px solid #a783ff;
+        border:
+            1px solid #a783ff;
 
         color: white;
 
         font-weight: 750;
 
         box-shadow:
-            0 8px 22px rgba(118, 88, 217, .28);
-
-        transition: all .2s ease;
+            0 8px 22px
+            rgba(118, 88, 217, .28);
     }
 
     [data-testid="stFormSubmitButton"] button:hover {
@@ -162,38 +166,42 @@ st.markdown(
                 #856ce5,
                 #aa73ff
             );
-
-        transform: translateY(-1px);
-
-        box-shadow:
-            0 10px 28px rgba(118, 88, 217, .38);
     }
 
 
     /* =====================================================
-       POSTER BUTTON
+       MOVIE POSTER BUTTON
        ===================================================== */
 
-    .poster-button {
-        width: 100%;
-        aspect-ratio: 2 / 3;
+    .poster-click-area button {
+        width: 100% !important;
+
+        height: 100% !important;
+
+        min-height: 360px !important;
 
         padding: 0 !important;
 
+        margin: 0 !important;
+
         border-radius: 15px !important;
+
+        border:
+            1px solid
+            rgba(255, 255, 255, .08) !important;
+
+        background:
+            transparent !important;
+
+        color: transparent !important;
+
+        font-size: 0 !important;
 
         overflow: hidden !important;
 
-        border: 1px solid rgba(255, 255, 255, .08) !important;
-
-        background-size: cover !important;
-
-        background-position: center !important;
-
-        background-repeat: no-repeat !important;
-
         box-shadow:
-            0 10px 25px rgba(0, 0, 0, .30);
+            0 10px 25px
+            rgba(0, 0, 0, .30);
 
         transition:
             transform .22s ease,
@@ -201,7 +209,7 @@ st.markdown(
             border-color .22s ease;
     }
 
-    .poster-button:hover {
+    .poster-click-area button:hover {
         transform:
             translateY(-7px)
             scale(1.015);
@@ -210,15 +218,33 @@ st.markdown(
             rgba(151, 119, 255, .70) !important;
 
         box-shadow:
-            0 18px 38px rgba(71, 46, 150, .40);
+            0 18px 38px
+            rgba(71, 46, 150, .40);
     }
 
-    .poster-button p {
+    .poster-click-area button p {
         display: none !important;
     }
 
-    .poster-button div {
-        display: none !important;
+
+    /* =====================================================
+       POSTER IMAGE
+       ===================================================== */
+
+    .poster-image {
+        width: 100%;
+
+        aspect-ratio: 2 / 3;
+
+        object-fit: cover;
+
+        border-radius: 15px;
+
+        display: block;
+
+        box-shadow:
+            0 10px 25px
+            rgba(0, 0, 0, .30);
     }
 
 
@@ -303,7 +329,8 @@ st.markdown(
             );
 
         border:
-            1px solid rgba(139, 108, 255, .20);
+            1px solid
+            rgba(139, 108, 255, .20);
 
         border-radius: 15px;
 
@@ -314,7 +341,8 @@ st.markdown(
         margin-bottom: 12px;
 
         box-shadow:
-            0 8px 25px rgba(0, 0, 0, .18);
+            0 8px 25px
+            rgba(0, 0, 0, .18);
     }
 
     .info-label {
@@ -353,7 +381,8 @@ st.markdown(
             );
 
         border:
-            1px solid rgba(92, 207, 255, .16);
+            1px solid
+            rgba(92, 207, 255, .16);
 
         border-radius: 15px;
 
@@ -362,7 +391,8 @@ st.markdown(
         margin-bottom: 10px;
 
         box-shadow:
-            0 8px 24px rgba(0, 0, 0, .20);
+            0 8px 24px
+            rgba(0, 0, 0, .20);
     }
 
 
@@ -379,7 +409,8 @@ st.markdown(
             );
 
         border:
-            1px solid rgba(139, 108, 255, .18);
+            1px solid
+            rgba(139, 108, 255, .18);
 
         border-radius: 14px;
 
@@ -392,18 +423,8 @@ st.markdown(
         font-weight: 650;
 
         box-shadow:
-            0 8px 22px rgba(0, 0, 0, .18);
-
-        transition:
-            transform .2s ease,
-            border-color .2s ease;
-    }
-
-    .browse-card:hover {
-        transform: translateY(-3px);
-
-        border-color:
-            rgba(139, 108, 255, .45);
+            0 8px 22px
+            rgba(0, 0, 0, .18);
     }
 
 
@@ -415,27 +436,14 @@ st.markdown(
         border-radius: 11px !important;
 
         border:
-            1px solid rgba(139, 108, 255, .24) !important;
+            1px solid
+            rgba(139, 108, 255, .24) !important;
 
         background:
             rgba(18, 21, 31, .90) !important;
 
         color:
             #f3f4f8 !important;
-
-        transition:
-            all .18s ease !important;
-    }
-
-    .stButton > button:hover {
-        border-color:
-            rgba(139, 108, 255, .62) !important;
-
-        background:
-            rgba(34, 29, 55, .95) !important;
-
-        transform:
-            translateY(-1px);
     }
 
 
@@ -461,6 +469,20 @@ st.markdown(
 
 
     /* =====================================================
+       DIALOG
+       ===================================================== */
+
+    [data-testid="stDialog"] {
+        background:
+            linear-gradient(
+                145deg,
+                #0c0f17,
+                #080a10
+            ) !important;
+    }
+
+
+    /* =====================================================
        MOBILE
        ===================================================== */
 
@@ -474,6 +496,10 @@ st.markdown(
             font-size: 38px;
         }
 
+        .poster-click-area button {
+            min-height: 300px !important;
+        }
+
     }
 
     </style>
@@ -483,11 +509,16 @@ st.markdown(
 
 
 # =========================================================
-# SESSION STATE
+# MOVIE DETAILS DIALOG
 # =========================================================
 
-if "selected_movie_id" not in st.session_state:
-    st.session_state.selected_movie_id = None
+@st.dialog(
+    "Movie Details",
+    width="large"
+)
+def open_movie_details(movie_id):
+
+    render_movie_details(movie_id)
 
 
 # =========================================================
@@ -512,8 +543,11 @@ with st.sidebar:
     st.divider()
 
     if get_token():
-        st.success("")
+
+        st.success("TMDB Connected")
+
     else:
+
         st.error("TMDB token missing")
 
         st.caption(
@@ -537,13 +571,16 @@ render_home()
 
 
 # =========================================================
-# MOVIE DETAILS
+# OPEN SELECTED MOVIE
 # =========================================================
 
-if st.session_state.selected_movie_id is not None:
+if (
+    "open_movie_id" in st.session_state
+    and st.session_state.open_movie_id is not None
+):
 
-    st.divider()
+    movie_id = st.session_state.open_movie_id
 
-    render_movie_details(
-        st.session_state.selected_movie_id
-    )
+    st.session_state.open_movie_id = None
+
+    open_movie_details(movie_id)
