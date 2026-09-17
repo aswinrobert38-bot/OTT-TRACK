@@ -9,7 +9,7 @@ from services.tmdb_service import get_token
 
 
 # =========================================================
-# PAGE CONFIGURATION
+# PAGE CONFIG
 # =========================================================
 
 st.set_page_config(
@@ -29,7 +29,7 @@ st.markdown(
     <style>
 
     /* =====================================================
-       MAIN APP
+       GLOBAL
        ===================================================== */
 
     .stApp {
@@ -39,7 +39,7 @@ st.markdown(
 
     .block-container {
         max-width: 1500px;
-        padding: 28px 42px 70px;
+        padding: 30px 42px 70px;
     }
 
 
@@ -49,7 +49,7 @@ st.markdown(
 
     [data-testid="stSidebar"] {
         background: #0b0d12;
-        border-right: 1px solid #1b1e26;
+        border-right: 1px solid #1c1f28;
     }
 
     [data-testid="stSidebar"] .block-container {
@@ -57,156 +57,76 @@ st.markdown(
     }
 
 
-    /* =====================================================
-       REMOVE STREAMLIT DEFAULT PAGE NAVIGATION
-       ===================================================== */
-
     [data-testid="stSidebarNav"] {
         display: none;
     }
 
 
     /* =====================================================
-       SIDEBAR BRAND
-       ===================================================== */
-
-    .sidebar-brand {
-        font-size: 28px;
-        font-weight: 800;
-        letter-spacing: -1.2px;
-        margin-bottom: 4px;
-    }
-
-    .sidebar-subtitle {
-        color: #777d8c;
-        font-size: 10px;
-        letter-spacing: 1px;
-        line-height: 1.5;
-    }
-
-
-    /* =====================================================
-       HERO
-       ===================================================== */
-
-    .hero {
-        padding: 54px 52px;
-        min-height: 320px;
-        border: 1px solid #20232d;
-        border-radius: 28px;
-
-        background:
-            radial-gradient(
-                circle at 80% 20%,
-                rgba(145,112,255,.18),
-                transparent 32%
-            ),
-            linear-gradient(
-                135deg,
-                #141722,
-                #0b0d12
-            );
-
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-
-        margin-bottom: 28px;
-    }
-
-    .hero-kicker {
-        color: #a78bfa;
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 1.7px;
-    }
-
-    .hero-title {
-        font-size: clamp(42px, 5.3vw, 72px);
-        font-weight: 800;
-        line-height: .98;
-        letter-spacing: -3px;
-        margin: 12px 0 18px;
-    }
-
-    .hero-text {
-        color: #9299a9;
-        font-size: 15px;
-        line-height: 1.65;
-        max-width: 720px;
-    }
-
-
-    /* =====================================================
-       SEARCH AREA
+       SEARCH
        ===================================================== */
 
     [data-testid="stForm"] {
         background: #0d1016;
         border: 1px solid #20232d;
-        border-radius: 18px;
+        border-radius: 16px;
         padding: 10px;
-        margin-bottom: 28px;
+        margin: 10px 0 30px;
     }
 
     [data-testid="stTextInput"] input {
         background: #10131a !important;
         border: 1px solid #252936 !important;
-        color: white !important;
-        border-radius: 12px !important;
+        color: #ffffff !important;
+        border-radius: 11px !important;
         min-height: 46px;
-    }
-
-    [data-testid="stTextInput"] input:focus {
-        border-color: #8166dd !important;
     }
 
     [data-testid="stFormSubmitButton"] button {
         min-height: 46px;
-        border-radius: 12px;
+        border-radius: 11px;
         background: #7658d9;
-        border: 1px solid #8b73e6;
+        border: 1px solid #8d76e5;
         color: white;
         font-weight: 700;
     }
 
     [data-testid="stFormSubmitButton"] button:hover {
-        background: #846be3;
-        border-color: #a18cf0;
+        background: #856ce5;
     }
 
 
     /* =====================================================
-       SECTIONS
+       MOVIE POSTERS
        ===================================================== */
 
-    .section-heading {
-        margin-top: 36px;
-        margin-bottom: 16px;
+    a {
+        text-decoration: none !important;
     }
 
-    .section-heading h2 {
-        margin-bottom: 4px;
-        font-size: 24px;
-        letter-spacing: -.7px;
+    a img {
+        width: 100%;
+        aspect-ratio: 2 / 3;
+        object-fit: cover;
+        border-radius: 12px;
+        transition: transform .18s ease,
+                    opacity .18s ease;
     }
 
-    .section-heading p {
-        margin: 0;
-        color: #6f7686;
-        font-size: 12px;
+    a img:hover {
+        transform: translateY(-5px);
+        opacity: .86;
     }
 
 
     /* =====================================================
-       MOVIE CARDS
+       MOVIE TITLE
        ===================================================== */
 
     .movie-title {
-        margin-top: 8px;
         font-size: 14px;
         font-weight: 700;
-
+        margin-top: 8px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -216,77 +136,7 @@ st.markdown(
         color: #777e8e;
         font-size: 11px;
         margin-top: 4px;
-
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-
-    /* =====================================================
-       POSTER LINKS
-       ===================================================== */
-
-    a {
-        text-decoration: none !important;
-    }
-
-    a img {
-        border-radius: 11px;
-        width: 100%;
-        aspect-ratio: 2 / 3;
-        object-fit: cover;
-        transition: transform .18s ease,
-                    opacity .18s ease;
-    }
-
-    a img:hover {
-        transform: translateY(-4px);
-        opacity: .88;
-    }
-
-
-    /* =====================================================
-       BROWSE CARDS
-       ===================================================== */
-
-    .browse-card {
-        background: #0e1016;
-        border: 1px solid #1c1f28;
-        border-radius: 14px;
-        padding: 18px;
-        margin-bottom: 12px;
-        text-align: center;
-        color: #e8eaf0;
-        font-size: 13px;
-        font-weight: 600;
-    }
-
-
-    /* =====================================================
-       SEARCH RESULTS
-       ===================================================== */
-
-    .search-result-box {
-        background: #0d1016;
-        border: 1px solid #20232d;
-        border-radius: 16px;
-        padding: 16px 18px;
-        margin: 12px 0 24px;
-    }
-
-    .search-result-label {
-        color: #777e8e;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 1px;
-    }
-
-    .search-result-title {
-        color: white;
-        font-size: 20px;
-        font-weight: 700;
-        margin-top: 4px;
+        margin-bottom: 18px;
     }
 
 
@@ -297,36 +147,44 @@ st.markdown(
     .details-title {
         font-size: 52px;
         font-weight: 800;
-        letter-spacing: -2.5px;
-        margin-bottom: 8px;
-    }
-
-    .details-subtitle {
-        color: #8b92a1;
-        font-size: 14px;
-        line-height: 1.7;
-    }
-
-    .detail-box {
-        background: #0e1016;
-        border: 1px solid #1e222c;
-        border-radius: 14px;
-        padding: 15px;
+        letter-spacing: -2px;
+        line-height: 1;
         margin-bottom: 12px;
     }
 
-    .detail-label {
-        color: #666d7c;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-size: 9px;
-        font-weight: 700;
+    .details-description {
+        color: #9299a9;
+        line-height: 1.7;
+        font-size: 14px;
     }
 
-    .detail-value {
-        margin-top: 6px;
+
+    /* =====================================================
+       INFO BOXES
+       ===================================================== */
+
+    .info-box {
+        background: #0d1016;
+        border: 1px solid #1e222c;
+        border-radius: 14px;
+        padding: 15px;
+        min-height: 82px;
+        margin-bottom: 12px;
+    }
+
+    .info-label {
+        color: #656c7b;
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .info-value {
+        color: #f0f1f4;
         font-size: 14px;
         font-weight: 650;
+        margin-top: 7px;
     }
 
 
@@ -334,12 +192,27 @@ st.markdown(
        OTT
        ===================================================== */
 
-    .ott-box {
+    .ott-card {
         background: #0d1016;
         border: 1px solid #1d212b;
-        border-radius: 15px;
-        padding: 14px;
+        border-radius: 14px;
+        padding: 15px;
         margin-bottom: 10px;
+    }
+
+
+    /* =====================================================
+       BROWSE
+       ===================================================== */
+
+    .browse-card {
+        background: #0d1016;
+        border: 1px solid #1d212b;
+        border-radius: 13px;
+        padding: 17px;
+        text-align: center;
+        margin-bottom: 12px;
+        font-weight: 600;
     }
 
 
@@ -353,16 +226,8 @@ st.markdown(
             padding: 18px;
         }
 
-        .hero {
-            padding: 32px;
-        }
-
-        .hero-title {
-            font-size: 46px;
-        }
-
         .details-title {
-            font-size: 40px;
+            font-size: 38px;
         }
 
     }
@@ -382,7 +247,7 @@ if "selected_movie_id" not in st.session_state:
 
 
 # =========================================================
-# MOVIE CLICK HANDLER
+# POSTER CLICK HANDLER
 # =========================================================
 
 movie_id = st.query_params.get("movie_id")
@@ -398,34 +263,33 @@ if movie_id:
 
 # =========================================================
 # SIDEBAR
-# ONLY BRAND + STATUS
 # =========================================================
 
 with st.sidebar:
 
     st.markdown(
-        "### ReelRoute"
+        "## ReelRoute"
     )
 
     st.caption(
-        "MOVIE & OTT DISCOVERY PLATFORM"
+        "MOVIE & OTT DISCOVERY"
     )
 
     st.divider()
 
     st.markdown(
-        "#### About"
+        "### About"
     )
 
     st.caption(
-        "Discover movies, explore their details "
-        "and find OTT availability in India."
+        "Search movies, explore complete movie information "
+        "and check India-specific OTT availability."
     )
 
     st.divider()
 
     st.markdown(
-        "#### Data"
+        "### Data Source"
     )
 
     if get_token():
@@ -441,7 +305,7 @@ with st.sidebar:
         )
 
         st.caption(
-            "Add TMDB_API_KEY to .env and restart the app."
+            "Add TMDB_API_KEY to your .env file."
         )
 
     st.divider()
@@ -456,7 +320,7 @@ with st.sidebar:
 
 
 # =========================================================
-# SINGLE-PAGE APPLICATION
+# SINGLE PAGE ROUTING
 # =========================================================
 
 if st.session_state.selected_movie_id is not None:
