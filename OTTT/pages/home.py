@@ -5,68 +5,129 @@ from services.tmdb_service import (
     get_now_playing,
     get_popular,
     get_trending,
-    normalize_movie,
     search_movies
 )
 
 
-def show_movies(movies, section_name):
+# =========================================================
+# MOVIE DATA HELPER
+# =========================================================
+
+def prepare_movie(movie):
+
+    if not isinstance(movie, dict):
+        return None
+
+    movie_id = movie.get("id")
+
+    title = (
+        movie.get("title")
+        or movie.get("name")
+        or "Untitled"
+    )
+
+    release_date = (
+        movie.get("release_date")
+        or movie.get("first_air_date")
+        or ""
+    )
+
+    poster_url = movie.get("poster_url")
+
+    if not poster_url:
+
+        poster_path = movie.get(
+            "poster_path"
+        )
+
+        if poster_path:
+
+            poster_url = (
+                "https://image.tmdb.org/t/p/w500"
+                + poster_path
+            )
+
+    rating = movie.get(
+        "rating"
+    )
+
+    if rating is None:
+
+        rating = movie.get(
+            "vote_average",
+            0
+        )
+
+    return {
+        "id": movie_id,
+        "title": title,
+        "release_date": release_date,
+        "poster_url": poster_url,
+        "rating": rating
+    }
+
+
+# =========================================================
+# MOVIE CARD
+# =========================================================
+
+def show_movies(
+    movies,
+    section_name
+):
 
     st.markdown(
-        f"""
-        <h2 style="
-            margin-top: 30px;
-            margin-bottom: 20px;
-            color: white;
-            font-size: 26px;
-        ">
-            {section_name}
-        </h2>
-        """,
-        unsafe_allow_html=True
+        f"## {section_name}"
     )
 
     if not movies:
-        st.info("No movies available.")
+
+        st.info(
+            "No movies available."
+        )
+
         return
 
-    # 5 columns instead of 6
+    prepared_movies = []
+
+    for movie in movies:
+
+        prepared = prepare_movie(
+            movie
+        )
+
+        if prepared:
+            prepared_movies.append(
+                prepared
+            )
+
+    if not prepared_movies:
+
+        st.info(
+            "No movie data available."
+        )
+
+        return
+
+    # Five cards per row
     columns = st.columns(
         5,
         gap="medium"
     )
 
-    for index, movie in enumerate(movies[:10]):
+    for index, movie in enumerate(
+        prepared_movies[:10]
+    ):
 
         with columns[index % 5]:
 
-            title = movie.get(
-                "title"
-            ) or "Untitled"
-
-            release_date = (
-                movie.get("release_date")
-                or ""
-            )
-
-            year = release_date[:4]
-
-            rating = movie.get(
-                "rating",
-                0
-            )
+            # =================================================
+            # POSTER
+            # =================================================
 
             poster = movie.get(
                 "poster_url"
             )
-
-            movie_id = movie.get(
-                "id"
-            )
-
-            # =========================
-            # POSTER
-            # =========================
 
             if poster:
 
@@ -77,59 +138,44 @@ def show_movies(movies, section_name):
 
             else:
 
-                st.markdown(
-                    """
-                    <div style="
-                        height: 300px;
-                        border-radius: 12px;
-                        background: #15161d;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: #777;
-                        font-size: 13px;
-                        margin-bottom: 10px;
-                    ">
-                        NO POSTER
-                    </div>
-                    """,
-                    unsafe_allow_html=True
+                st.info(
+                    "No poster"
                 )
 
-            # =========================
+            # =================================================
             # TITLE
-            # =========================
+            # =================================================
 
-            st.markdown(
-                f"""
-                <div style="
-                    min-height: 48px;
-                    margin-top: 8px;
-                    color: white;
-                    font-size: 15px;
-                    font-weight: 700;
-                    line-height: 1.4;
-                ">
-                    {title}
-                </div>
-                """,
-                unsafe_allow_html=True
+            title = movie.get(
+                "title",
+                "Untitled"
             )
 
-            # =========================
-            # YEAR + RATING
-            # =========================
+            st.markdown(
+                f"**{title}**"
+            )
 
-            metadata = []
+            # =================================================
+            # YEAR
+            # =================================================
 
-            if year:
-                metadata.append(year)
+            release_date = movie.get(
+                "release_date",
+                ""
+            )
+
+            year = release_date[:4]
+
+            rating = movie.get(
+                "rating",
+                0
+            )
 
             try:
 
-                metadata.append(
-                    "★ " +
-                    str(
+                rating_text = (
+                    "★ "
+                    + str(
                         round(
                             float(rating),
                             1
@@ -138,40 +184,47 @@ def show_movies(movies, section_name):
                 )
 
             except Exception:
-                pass
 
-            if metadata:
+                rating_text = "★ N/A"
 
-                st.markdown(
-                    f"""
-                    <div style="
-                        color: #9b9daa;
-                        font-size: 13px;
-                        margin-top: 5px;
-                        margin-bottom: 12px;
-                    ">
-                        {" • ".join(metadata)}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
+            if year:
+
+                st.caption(
+                    f"{year} • {rating_text}"
                 )
 
-            # =========================
+            else:
+
+                st.caption(
+                    rating_text
+                )
+
+            # =================================================
             # OPEN MOVIE
-            # =========================
+            # =================================================
+
+            movie_id = movie.get(
+                "id"
+            )
 
             if movie_id:
 
                 if st.button(
                     "Open Movie",
-                    key=f"home_movie_{movie_id}_{index}",
+                    key=f"open_{movie_id}_{index}",
                     use_container_width=True
                 ):
 
-                    st.session_state.selected_movie_id = movie_id
+                    st.session_state.selected_movie_id = (
+                        movie_id
+                    )
 
                     st.rerun()
 
+
+# =========================================================
+# HOME PAGE
+# =========================================================
 
 def render_home():
 
@@ -179,106 +232,132 @@ def render_home():
     # HERO
     # =========================================================
 
-    st.markdown(
-        """
-        <div style="
-            padding: 38px 42px;
-            border-radius: 22px;
-            background:
-                linear-gradient(
-                    120deg,
-                    rgba(124,58,237,0.28),
-                    rgba(236,72,153,0.18),
-                    rgba(15,23,42,0.92)
-                );
-            border: 1px solid rgba(255,255,255,0.10);
-            margin-bottom: 25px;
-        ">
-
-            <div style="
-                font-size: 46px;
-                font-weight: 900;
-                color: white;
-                letter-spacing: -1px;
-            ">
-                ReelRoute
-            </div>
-
-            <div style="
-                margin-top: 8px;
-                color: #b5b8c5;
-                font-size: 17px;
-            ">
-                Every Movie. Every Platform. One Place.
-            </div>
-
-        </div>
-        """,
-        unsafe_allow_html=True
+    st.title(
+        "ReelRoute"
     )
 
+    st.subheader(
+        "Every Movie. Every Platform. One Place."
+    )
+
+    st.caption(
+        "Discover movies, explore details, and find where to watch."
+    )
+
+    st.divider()
+
     # =========================================================
-    # SEARCH BAR
+    # SEARCH
     # =========================================================
 
     st.markdown(
-        """
-        <div style="
-            font-size: 22px;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 10px;
-        ">
-            Search Movies
-        </div>
-        """,
-        unsafe_allow_html=True
+        "### Search Movies"
     )
 
-    search_col, button_col = st.columns(
-        [5, 1],
-        gap="medium"
-    )
+    with st.form(
+        "home_search_form"
+    ):
 
-    with search_col:
-
-        query = st.text_input(
-            "Search",
-            placeholder="Search for a movie...",
-            label_visibility="collapsed",
-            key="home_search"
+        search_col, button_col = st.columns(
+            [5, 1],
+            gap="medium"
         )
 
-    with button_col:
+        with search_col:
 
-        search_clicked = st.button(
-            "Search",
-            use_container_width=True,
-            key="home_search_button"
-        )
+            query = st.text_input(
+                "Movie",
+                placeholder=(
+                    "Search for a movie..."
+                ),
+                label_visibility="collapsed"
+            )
+
+        with button_col:
+
+            search_clicked = st.form_submit_button(
+                "Search",
+                use_container_width=True
+            )
 
     # =========================================================
     # SEARCH RESULTS
     # =========================================================
 
-    if search_clicked and query.strip():
+    if search_clicked:
+
+        if not query.strip():
+
+            st.warning(
+                "Enter a movie title to search."
+            )
+
+            return
 
         try:
 
-            results = search_movies(
+            raw_results = search_movies(
                 query.strip()
             )
 
-            movies = [
-                normalize_movie(item)
-                for item in results
-            ]
+            # Make sure the result is iterable
+            if isinstance(
+                raw_results,
+                dict
+            ):
+
+                results = raw_results.get(
+                    "results",
+                    []
+                )
+
+            elif isinstance(
+                raw_results,
+                list
+            ):
+
+                results = raw_results
+
+            else:
+
+                results = []
+
+            valid_results = []
+
+            for item in results:
+
+                prepared = prepare_movie(
+                    item
+                )
+
+                if prepared:
+
+                    valid_results.append(
+                        prepared
+                    )
 
             st.divider()
 
+            st.markdown(
+                f"### Search Results"
+            )
+
+            st.caption(
+                f"{len(valid_results)} result(s) for "
+                f'"{query.strip()}"'
+            )
+
+            if not valid_results:
+
+                st.warning(
+                    "TMDB returned no matching movies."
+                )
+
+                return
+
             show_movies(
-                movies,
-                "Search Results"
+                valid_results,
+                "Movies"
             )
 
             return
@@ -291,15 +370,27 @@ def render_home():
 
             return
 
+        except Exception as error:
+
+            st.error(
+                "Search failed. Please try again."
+            )
+
+            st.caption(
+                str(error)
+            )
+
+            return
+
     # =========================================================
     # DEFAULT HOME CONTENT
     # =========================================================
 
     try:
 
-        # -------------------------
-        # Trending
-        # -------------------------
+        # -----------------------------------------------------
+        # TRENDING
+        # -----------------------------------------------------
 
         trending = get_trending()
 
@@ -311,9 +402,11 @@ def render_home():
             "Trending Movies"
         )
 
-        # -------------------------
-        # Now Playing
-        # -------------------------
+        st.divider()
+
+        # -----------------------------------------------------
+        # NOW PLAYING
+        # -----------------------------------------------------
 
         now_playing = get_now_playing()
 
@@ -325,9 +418,11 @@ def render_home():
             "Now Playing"
         )
 
-        # -------------------------
-        # Popular
-        # -------------------------
+        st.divider()
+
+        # -----------------------------------------------------
+        # POPULAR
+        # -----------------------------------------------------
 
         popular = get_popular()
 
@@ -342,5 +437,15 @@ def render_home():
     except TMDBError as error:
 
         st.error(
+            str(error)
+        )
+
+    except Exception as error:
+
+        st.error(
+            "Unable to load movies."
+        )
+
+        st.caption(
             str(error)
         )
