@@ -1,35 +1,164 @@
 import html
 import streamlit as st
-from streamlit_image_coordinates import streamlit_image_coordinates
 
 from services.tmdb_service import (
     TMDBError,
-    normalize_movie,
-    search_movies
+    search_movies,
 )
+
+
+def get_results(data):
+
+    if isinstance(data, dict):
+        return data.get("results", [])
+
+    if isinstance(data, list):
+        return data
+
+    return []
+
+
+def display_movie(movie):
+
+    movie_id = movie.get("id")
+
+    title = (
+        movie.get("title")
+        or movie.get("name")
+        or "Untitled"
+    )
+
+    release_date = movie.get("release_date") or ""
+
+    year = (
+        release_date[:4]
+        if release_date
+        else "N/A"
+    )
+
+    rating = movie.get("rating")
+
+    if rating is None:
+        rating = movie.get("vote_average", 0)
+
+    try:
+        rating_text = str(
+            round(float(rating), 1)
+        )
+    except Exception:
+        rating_text = "N/A"
+
+    language = (
+        movie.get("original_language")
+        or "N/A"
+    )
+
+    poster = movie.get("poster_url")
+
+    if not poster:
+
+        poster_path = movie.get(
+            "poster_path"
+        )
+
+        if poster_path:
+
+            poster = (
+                "https://image.tmdb.org/t/p/w500"
+                + poster_path
+            )
+
+    # -----------------------------------------
+    # CLICKABLE POSTER
+    # -----------------------------------------
+
+    if poster and movie_id:
+
+        st.markdown(
+            f"""
+            <a
+                href="?movie_id={movie_id}"
+                class="movie-poster-link"
+                title="{html.escape(title, quote=True)}"
+            >
+                <img
+                    src="{html.escape(poster, quote=True)}"
+                    class="movie-poster"
+                >
+            </a>
+            """,
+            unsafe_allow_html=True
+        )
+
+    elif poster:
+
+        st.image(
+            poster,
+            use_container_width=True
+        )
+
+    else:
+
+        st.markdown(
+            """
+            <div class="poster-placeholder">
+                NO POSTER
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # -----------------------------------------
+    # TITLE
+    # -----------------------------------------
+
+    st.markdown(
+        f"""
+        <div class="movie-card-title">
+            {html.escape(title)}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # -----------------------------------------
+    # INFORMATION
+    # -----------------------------------------
+
+    st.markdown(
+        f"""
+        <div class="movie-card-meta">
+            {html.escape(year)}
+            <span>•</span>
+            {html.escape(language.upper())}
+            <span>•</span>
+            ★ {html.escape(rating_text)}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 
 def render_search():
 
-    # =========================================================
-    # SEARCH HEADER
-    # =========================================================
+    # -----------------------------------------
+    # PAGE HEADER
+    # -----------------------------------------
 
     st.markdown(
         """
-        <div class="page-head">
+        <div class="search-page-header">
 
             <div class="hero-kicker">
                 DISCOVER
             </div>
 
             <h1>
-                Search movies
+                Find your next movie
             </h1>
 
             <p>
-                Search TMDB instead of a fixed demo list.
-                Year and original-language filters are sent to the API.
+                Search movies from across languages and years.
             </p>
 
         </div>
@@ -37,59 +166,31 @@ def render_search():
         unsafe_allow_html=True
     )
 
-    # =========================================================
-    # SEARCH CONTROLS
-    # =========================================================
+    # -----------------------------------------
+    # SEARCH BOX
+    # -----------------------------------------
 
-    c1, c2, c3 = st.columns([2.5, 1, 1])
-
-    with c1:
-
-        query = st.text_input(
-            "Movie title",
-            placeholder="Enter a movie title...",
-            key="search_query"
-        )
-
-    with c2:
-
-        year = st.number_input(
-            "Year",
-            min_value=1900,
-            max_value=2100,
-            value=2026,
-            step=1,
-            key="search_year"
-        )
-
-    with c3:
-
-        language = st.text_input(
-            "Language code",
-            placeholder="ta / en / hi",
-            key="search_language"
-        )
-
-    # =========================================================
-    # EMPTY SEARCH
-    # =========================================================
+    query = st.text_input(
+        "Search movie",
+        placeholder="Search for a movie...",
+        key="search_page_query",
+        label_visibility="collapsed"
+    )
 
     if not query.strip():
 
         st.markdown(
             """
-            <div class="empty-state">
+            <div class="search-empty">
 
-                <h3>
-                    Start with a movie title
-                </h3>
+                <div class="search-empty-title">
+                    Search the movie catalogue
+                </div>
 
-                <p>
-                    Try <b>Leo</b>,
-                    <b>Interstellar</b>,
-                    <b>Jailer</b>
-                    or any other title.
-                </p>
+                <div class="search-empty-text">
+                    Try movie names such as Leo,
+                    Interstellar, Jailer or Vikram.
+                </div>
 
             </div>
             """,
@@ -98,36 +199,42 @@ def render_search():
 
         return
 
-    # =========================================================
-    # SEARCH TMDB
-    # =========================================================
+    # -----------------------------------------
+    # API SEARCH
+    # -----------------------------------------
 
     try:
 
-        results = search_movies(
-            query.strip(),
-            year=year if year else None,
-            language=language.strip().lower() or None
+        data = search_movies(
+            query.strip()
         )
 
-    except TMDBError as exc:
+        movies = get_results(data)
 
-        st.error(str(exc))
+    except TMDBError as error:
+
+        st.error(str(error))
         return
 
-    movies = [
-        normalize_movie(movie)
-        for movie in results
-    ]
-
-    # =========================================================
+    # -----------------------------------------
     # RESULT COUNT
-    # =========================================================
+    # -----------------------------------------
 
     st.markdown(
         f"""
-        <div class="result-line">
-            <b>{len(movies)}</b> result(s)
+        <div class="search-result-heading">
+
+            <div>
+                <span>RESULTS FOR</span>
+                <strong>
+                    {html.escape(query.strip())}
+                </strong>
+            </div>
+
+            <div>
+                {len(movies)} movie(s)
+            </div>
+
         </div>
         """,
         unsafe_allow_html=True
@@ -136,108 +243,24 @@ def render_search():
     if not movies:
 
         st.warning(
-            "TMDB returned no matching movie."
+            "No matching movies were found."
         )
 
         return
 
-    # =========================================================
-    # MOVIE GRID
-    # =========================================================
+    # -----------------------------------------
+    # MOVIES
+    # -----------------------------------------
 
-    cols = st.columns(6, gap="medium")
+    columns = st.columns(
+        6,
+        gap="medium"
+    )
 
-    for i, movie in enumerate(movies):
+    for index, movie in enumerate(
+        movies[:24]
+    ):
 
-        with cols[i % 6]:
+        with columns[index % 6]:
 
-            title = movie.get("title") or "Untitled"
-            poster = movie.get("poster_url")
-            movie_id = movie.get("id")
-
-            release_date = (
-                movie.get("release_date")
-                or ""
-            )
-
-            year_text = release_date[:4]
-
-            rating = movie.get("rating", 0)
-
-            # =================================================
-            # CLICKABLE POSTER
-            # =================================================
-
-            if poster and movie_id:
-
-                clicked = streamlit_image_coordinates(
-                    poster,
-                    width=220,
-                    key="search_poster_" + str(movie_id)
-                )
-
-                if clicked:
-
-                    st.session_state.selected_movie_id = str(
-                        movie_id
-                    )
-
-                    st.session_state.page = "search"
-
-                    st.rerun()
-
-            elif poster:
-
-                st.image(
-                    poster,
-                    use_container_width=True
-                )
-
-            else:
-
-                st.markdown(
-                    """
-                    <div class="poster-fallback">
-                        NO POSTER
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-            # =================================================
-            # TITLE
-            # =================================================
-
-            st.markdown(
-                '<div class="movie-title">' +
-                html.escape(title) +
-                '</div>',
-                unsafe_allow_html=True
-            )
-
-            # =================================================
-            # META
-            # =================================================
-
-            metadata = []
-
-            if year_text:
-                metadata.append(year_text)
-
-            try:
-
-                metadata.append(
-                    "★ " +
-                    str(round(float(rating), 1))
-                )
-
-            except Exception:
-
-                pass
-
-            st.markdown(
-                '<div class="movie-meta">' +
-                " • ".join(metadata) +
-                '</div>',
-                unsafe_allow_html=True
-            )
+            display_movie(movie)
