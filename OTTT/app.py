@@ -289,13 +289,13 @@ with st.sidebar:
     st.divider()
 
     st.markdown(
-        "### Data Source"
+        ""
     )
 
     if get_token():
 
         st.success(
-            "TMDB connected"
+            ""
         )
 
     else:
