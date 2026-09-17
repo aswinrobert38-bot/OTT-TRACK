@@ -10,7 +10,31 @@ from services.tmdb_service import (
 
 
 # =========================================================
-# MOVIE DATA HELPER
+# EXTRACT MOVIE RESULTS SAFELY
+# =========================================================
+
+def get_movie_list(data):
+
+    if isinstance(data, dict):
+
+        results = data.get(
+            "results",
+            []
+        )
+
+        if isinstance(results, list):
+            return results
+
+        return []
+
+    if isinstance(data, list):
+        return data
+
+    return []
+
+
+# =========================================================
+# NORMALIZE MOVIE FOR DISPLAY
 # =========================================================
 
 def prepare_movie(movie):
@@ -32,9 +56,11 @@ def prepare_movie(movie):
         or ""
     )
 
-    poster_url = movie.get("poster_url")
+    poster = movie.get(
+        "poster_url"
+    )
 
-    if not poster_url:
+    if not poster:
 
         poster_path = movie.get(
             "poster_path"
@@ -42,7 +68,7 @@ def prepare_movie(movie):
 
         if poster_path:
 
-            poster_url = (
+            poster = (
                 "https://image.tmdb.org/t/p/w500"
                 + poster_path
             )
@@ -62,13 +88,13 @@ def prepare_movie(movie):
         "id": movie_id,
         "title": title,
         "release_date": release_date,
-        "poster_url": poster_url,
+        "poster_url": poster,
         "rating": rating
     }
 
 
 # =========================================================
-# MOVIE CARD
+# MOVIE GRID
 # =========================================================
 
 def show_movies(
@@ -97,6 +123,7 @@ def show_movies(
         )
 
         if prepared:
+
             prepared_movies.append(
                 prepared
             )
@@ -109,7 +136,7 @@ def show_movies(
 
         return
 
-    # Five cards per row
+    # Five movies per row
     columns = st.columns(
         5,
         gap="medium"
@@ -138,8 +165,8 @@ def show_movies(
 
             else:
 
-                st.info(
-                    "No poster"
+                st.markdown(
+                    "No poster available"
                 )
 
             # =================================================
@@ -156,7 +183,7 @@ def show_movies(
             )
 
             # =================================================
-            # YEAR
+            # YEAR + RATING
             # =================================================
 
             release_date = movie.get(
@@ -211,7 +238,11 @@ def show_movies(
 
                 if st.button(
                     "Open Movie",
-                    key=f"open_{movie_id}_{index}",
+                    key=(
+                        f"open_movie_"
+                        f"{movie_id}_"
+                        f"{index}"
+                    ),
                     use_container_width=True
                 ):
 
@@ -236,52 +267,50 @@ def render_home():
         "ReelRoute"
     )
 
-    st.subheader(
-        "Every Movie. Every Platform. One Place."
+    st.markdown(
+        "### Every Movie. Every Platform. One Place."
     )
 
     st.caption(
-        "Discover movies, explore details, and find where to watch."
+        "Discover movies and find where to watch them."
     )
 
     st.divider()
 
     # =========================================================
-    # SEARCH
+    # SEARCH BAR
     # =========================================================
 
     st.markdown(
         "### Search Movies"
     )
 
-    with st.form(
-        "home_search_form"
-    ):
+    search_col, button_col = st.columns(
+        [5, 1],
+        gap="medium"
+    )
 
-        search_col, button_col = st.columns(
-            [5, 1],
-            gap="medium"
+    with search_col:
+
+        query = st.text_input(
+            "Movie Search",
+            placeholder=(
+                "Search for a movie..."
+            ),
+            label_visibility="collapsed",
+            key="home_search"
         )
 
-        with search_col:
+    with button_col:
 
-            query = st.text_input(
-                "Movie",
-                placeholder=(
-                    "Search for a movie..."
-                ),
-                label_visibility="collapsed"
-            )
-
-        with button_col:
-
-            search_clicked = st.form_submit_button(
-                "Search",
-                use_container_width=True
-            )
+        search_clicked = st.button(
+            "Search",
+            use_container_width=True,
+            key="home_search_button"
+        )
 
     # =========================================================
-    # SEARCH RESULTS
+    # SEARCH
     # =========================================================
 
     if search_clicked:
@@ -289,74 +318,37 @@ def render_home():
         if not query.strip():
 
             st.warning(
-                "Enter a movie title to search."
+                "Enter a movie title."
             )
 
             return
 
         try:
 
-            raw_results = search_movies(
+            search_data = search_movies(
                 query.strip()
             )
 
-            # Make sure the result is iterable
-            if isinstance(
-                raw_results,
-                dict
-            ):
-
-                results = raw_results.get(
-                    "results",
-                    []
-                )
-
-            elif isinstance(
-                raw_results,
-                list
-            ):
-
-                results = raw_results
-
-            else:
-
-                results = []
-
-            valid_results = []
-
-            for item in results:
-
-                prepared = prepare_movie(
-                    item
-                )
-
-                if prepared:
-
-                    valid_results.append(
-                        prepared
-                    )
+            results = get_movie_list(
+                search_data
+            )
 
             st.divider()
 
             st.markdown(
-                f"### Search Results"
+                "### Search Results"
             )
 
-            st.caption(
-                f"{len(valid_results)} result(s) for "
-                f'"{query.strip()}"'
-            )
-
-            if not valid_results:
+            if not results:
 
                 st.warning(
-                    "TMDB returned no matching movies."
+                    "No movies found."
                 )
 
                 return
 
             show_movies(
-                valid_results,
+                results,
                 "Movies"
             )
 
@@ -373,79 +365,117 @@ def render_home():
         except Exception as error:
 
             st.error(
-                "Search failed. Please try again."
+                "Search could not be completed."
             )
 
-            st.caption(
+            st.code(
                 str(error)
             )
 
             return
 
     # =========================================================
-    # DEFAULT HOME CONTENT
+    # TRENDING
     # =========================================================
 
     try:
 
-        # -----------------------------------------------------
-        # TRENDING
-        # -----------------------------------------------------
+        trending_data = get_trending()
 
-        trending = get_trending()
+        trending_movies = get_movie_list(
+            trending_data
+        )
 
         show_movies(
-            trending.get(
-                "results",
-                []
-            ),
+            trending_movies,
             "Trending Movies"
         )
 
-        st.divider()
+    except TMDBError as error:
 
-        # -----------------------------------------------------
-        # NOW PLAYING
-        # -----------------------------------------------------
+        st.error(
+            "Trending Movies: "
+            + str(error)
+        )
 
-        now_playing = get_now_playing()
+    except Exception as error:
+
+        st.error(
+            "Trending Movies could not be loaded."
+        )
+
+        st.code(
+            str(error)
+        )
+
+    st.divider()
+
+    # =========================================================
+    # NOW PLAYING
+    # =========================================================
+
+    try:
+
+        now_playing_data = get_now_playing()
+
+        now_playing_movies = get_movie_list(
+            now_playing_data
+        )
 
         show_movies(
-            now_playing.get(
-                "results",
-                []
-            ),
+            now_playing_movies,
             "Now Playing"
         )
 
-        st.divider()
+    except TMDBError as error:
 
-        # -----------------------------------------------------
-        # POPULAR
-        # -----------------------------------------------------
+        st.error(
+            "Now Playing: "
+            + str(error)
+        )
 
-        popular = get_popular()
+    except Exception as error:
+
+        st.error(
+            "Now Playing could not be loaded."
+        )
+
+        st.code(
+            str(error)
+        )
+
+    st.divider()
+
+    # =========================================================
+    # POPULAR
+    # =========================================================
+
+    try:
+
+        popular_data = get_popular()
+
+        popular_movies = get_movie_list(
+            popular_data
+        )
 
         show_movies(
-            popular.get(
-                "results",
-                []
-            ),
+            popular_movies,
             "Popular Movies"
         )
 
     except TMDBError as error:
 
         st.error(
-            str(error)
+            "Popular Movies: "
+            + str(error)
         )
 
     except Exception as error:
 
         st.error(
-            "Unable to load movies."
+            "Popular Movies could not be loaded."
         )
 
-        st.caption(
+        st.code(
             str(error)
         )
