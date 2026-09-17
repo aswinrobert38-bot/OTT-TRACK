@@ -1,4 +1,3 @@
-import html
 import streamlit as st
 
 from services.tmdb_service import (
@@ -8,48 +7,141 @@ from services.tmdb_service import (
 )
 
 
+def show_provider_section(
+    providers,
+    section_title,
+    provider_type
+):
+
+    if not providers:
+        return
+
+    st.markdown(
+        "### " + section_title
+    )
+
+    columns = st.columns(4)
+
+    for index, provider in enumerate(providers):
+
+        with columns[index % 4]:
+
+            provider_name = provider.get(
+                "provider_name",
+                "Unknown"
+            )
+
+            logo_path = provider.get(
+                "logo_path"
+            )
+
+            # -------------------------
+            # Provider Logo
+            # -------------------------
+
+            if logo_path:
+
+                logo_url = (
+                    "https://image.tmdb.org/t/p/w154"
+                    + logo_path
+                )
+
+                st.image(
+                    logo_url,
+                    width=90
+                )
+
+            else:
+
+                st.markdown(
+                    "### " + provider_name
+                )
+
+            # -------------------------
+            # Provider Name
+            # -------------------------
+
+            st.markdown(
+                "**" + provider_name + "**"
+            )
+
+            # -------------------------
+            # Provider Type
+            # -------------------------
+
+            st.caption(
+                provider_type
+            )
+
+            st.divider()
+
+
 def render_movie_details(movie_id):
 
     # -------------------------
     # Back Button
     # -------------------------
-    if st.button("← Back", key="back_movie"):
+
+    if st.button(
+        "← Back",
+        key="back_movie"
+    ):
+
         st.session_state.selected_movie_id = None
-        st.session_state.page = "home"
+
         st.rerun()
 
     try:
-        movie = get_movie_details(movie_id)
+
+        movie = get_movie_details(
+            movie_id
+        )
+
     except TMDBError as error:
-        st.error(str(error))
+
+        st.error(
+            str(error)
+        )
+
         return
 
-    # -------------------------
-    # Movie Information
-    # -------------------------
-    title = movie.get("title") or "Untitled"
+    # =========================================================
+    # MOVIE INFORMATION
+    # =========================================================
 
-    overview = (
-        movie.get("overview")
-        or "No description available."
+    title = movie.get(
+        "title"
+    ) or "Untitled"
+
+    overview = movie.get(
+        "overview"
+    ) or "No description available."
+
+    poster = movie.get(
+        "poster_url"
     )
 
-    poster = movie.get("poster_url")
-    backdrop = movie.get("backdrop_url")
-
-    rating = movie.get("rating", 0)
-
-    release_date = (
-        movie.get("release_date")
-        or "Not available"
+    backdrop = movie.get(
+        "backdrop_url"
     )
 
-    original_language = (
-        movie.get("original_language")
-        or "Not available"
+    rating = movie.get(
+        "rating",
+        0
     )
 
-    genres = movie.get("genres", [])
+    release_date = movie.get(
+        "release_date"
+    ) or "Not available"
+
+    original_language = movie.get(
+        "original_language"
+    ) or "Not available"
+
+    genres = movie.get(
+        "genres",
+        []
+    )
 
     genre_names = [
         genre.get("name")
@@ -57,42 +149,48 @@ def render_movie_details(movie_id):
         if genre.get("name")
     ]
 
-    genre_text = ", ".join(genre_names)
-
-    # -------------------------
-    # Backdrop
-    # -------------------------
-    if backdrop:
-        st.markdown(
-            f"""
-            <div class="movie-backdrop">
-                <img src="{html.escape(backdrop, quote=True)}">
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # -------------------------
-    # Title
-    # -------------------------
-    st.markdown(
-        f"""
-        <div class="details-title">
-            {html.escape(title)}
-        </div>
-        """,
-        unsafe_allow_html=True
+    genre_text = ", ".join(
+        genre_names
     )
 
-    # -------------------------
-    # Basic Information
-    # -------------------------
+    # =========================================================
+    # BACKDROP
+    # =========================================================
+
+    if backdrop:
+
+        st.image(
+            backdrop,
+            use_container_width=True
+        )
+
+    # =========================================================
+    # TITLE
+    # =========================================================
+
+    st.title(
+        title
+    )
+
+    # =========================================================
+    # BASIC INFORMATION
+    # =========================================================
+
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
+
         try:
-            rating_value = str(round(float(rating), 1))
+
+            rating_value = str(
+                round(
+                    float(rating),
+                    1
+                )
+            )
+
         except Exception:
+
             rating_value = "N/A"
 
         st.metric(
@@ -101,23 +199,34 @@ def render_movie_details(movie_id):
         )
 
     with col2:
+
         st.metric(
             "Release",
             release_date
         )
 
     with col3:
+
         st.metric(
             "Language",
             original_language.upper()
         )
 
     with col4:
-        runtime = movie.get("runtime")
+
+        runtime = movie.get(
+            "runtime"
+        )
 
         if runtime:
-            runtime_text = str(runtime) + " min"
+
+            runtime_text = (
+                str(runtime)
+                + " min"
+            )
+
         else:
+
             runtime_text = "N/A"
 
         st.metric(
@@ -127,63 +236,86 @@ def render_movie_details(movie_id):
 
     st.divider()
 
+    # =========================================================
+    # MAIN CONTENT
+    # =========================================================
+
+    left, right = st.columns(
+        [1, 2],
+        gap="large"
+    )
+
     # -------------------------
-    # Main Content
+    # Poster
     # -------------------------
-    left, right = st.columns([1, 2])
 
     with left:
 
         if poster:
-            st.markdown(
-                f"""
-                <img
-                    src="{html.escape(poster, quote=True)}"
-                    class="details-poster"
-                >
-                """,
-                unsafe_allow_html=True
+
+            st.image(
+                poster,
+                use_container_width=True
             )
 
         else:
-            st.markdown(
-                """
-                <div class="poster-fallback">
-                    NO POSTER
-                </div>
-                """,
-                unsafe_allow_html=True
+
+            st.info(
+                "No poster available."
             )
+
+    # -------------------------
+    # About Movie
+    # -------------------------
 
     with right:
 
-        st.subheader("About the Movie")
+        st.subheader(
+            "About the Movie"
+        )
 
-        st.write(overview)
+        st.write(
+            overview
+        )
 
         if genre_text:
+
             st.markdown(
-                "**Genre:** " +
-                html.escape(genre_text)
+                "**Genre:** "
+                + genre_text
             )
 
-        tagline = movie.get("tagline")
+        tagline = movie.get(
+            "tagline"
+        )
 
         if tagline:
+
             st.markdown(
-                "**Tagline:** " +
-                html.escape(tagline)
+                "**Tagline:** "
+                + tagline
             )
 
-    # -------------------------
-    # Cast & Crew
-    # -------------------------
+    # =========================================================
+    # CAST & CREW
+    # =========================================================
+
     st.divider()
 
-    credits = movie.get("credits", {})
+    credits = movie.get(
+        "credits",
+        {}
+    )
 
-    cast = credits.get("cast", [])
-    crew = credits.get("crew", [])
+    cast = credits.get(
+        "cast",
+        []
+    )
+
+    crew = credits.get(
+        "crew",
+        []
+    )
 
     directors = [
         person.get("name")
@@ -192,12 +324,15 @@ def render_movie_details(movie_id):
         and person.get("name")
     ]
 
-    st.subheader("Cast & Crew")
+    st.subheader(
+        "Cast & Crew"
+    )
 
     if directors:
+
         st.markdown(
-            "**Director:** " +
-            ", ".join(directors)
+            "**Director:** "
+            + ", ".join(directors)
         )
 
     if cast:
@@ -209,14 +344,18 @@ def render_movie_details(movie_id):
         ]
 
         st.markdown(
-            "**Cast:** " +
-            ", ".join(cast_names)
+            "**Cast:** "
+            + ", ".join(cast_names)
         )
 
-    # -------------------------
-    # Trailer
-    # -------------------------
-    videos = movie.get("videos", {})
+    # =========================================================
+    # TRAILER
+    # =========================================================
+
+    videos = movie.get(
+        "videos",
+        {}
+    )
 
     video_results = videos.get(
         "results",
@@ -231,32 +370,43 @@ def render_movie_details(movie_id):
             video.get("site") == "YouTube"
             and video.get("type") == "Trailer"
         ):
+
             trailer = video
+
             break
 
     if trailer and trailer.get("key"):
 
         st.divider()
 
-        st.subheader("Trailer")
-
-        youtube_url = (
-            "https://www.youtube.com/watch?v=" +
-            trailer.get("key")
+        st.subheader(
+            "Trailer"
         )
 
-        st.video(youtube_url)
+        youtube_url = (
+            "https://www.youtube.com/watch?v="
+            + trailer.get("key")
+        )
 
-    # -------------------------
-    # OTT Availability
-    # -------------------------
+        st.video(
+            youtube_url
+        )
+
+    # =========================================================
+    # OTT AVAILABILITY
+    # =========================================================
+
     st.divider()
 
-    st.subheader("Where to Watch in India")
+    st.subheader(
+        "Where to Watch in India"
+    )
 
     try:
 
-        provider_data = get_watch_providers(movie_id)
+        provider_data = get_watch_providers(
+            movie_id
+        )
 
         results = provider_data.get(
             "results",
@@ -284,218 +434,53 @@ def render_movie_details(movie_id):
         )
 
         # -------------------------
-        # STREAM
+        # Streaming
         # -------------------------
-        if flatrate:
 
-            st.markdown(
-                '<div class="ott-heading">STREAM</div>',
-                unsafe_allow_html=True
-            )
-
-            for provider in flatrate:
-
-                provider_name = provider.get(
-                    "provider_name",
-                    "Unknown"
-                )
-
-                logo_path = provider.get(
-                    "logo_path"
-                )
-
-                if logo_path:
-
-                    logo_url = (
-                        "https://image.tmdb.org/t/p/w92" +
-                        logo_path
-                    )
-
-                    st.markdown(
-                        f"""
-                        <div class="ott-card">
-
-                            <img
-                                src="{html.escape(
-                                    logo_url,
-                                    quote=True
-                                )}"
-                                class="ott-logo"
-                            >
-
-                            <div class="ott-info">
-
-                                <div class="ott-name">
-                                    {html.escape(
-                                        provider_name
-                                    )}
-                                </div>
-
-                                <div class="ott-type">
-                                    Streaming
-                                </div>
-
-                            </div>
-
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-
-                else:
-
-                    st.markdown(
-                        f"""
-                        <div class="ott-card">
-
-                            <div class="ott-info">
-
-                                <div class="ott-name">
-                                    {html.escape(
-                                        provider_name
-                                    )}
-                                </div>
-
-                                <div class="ott-type">
-                                    Streaming
-                                </div>
-
-                            </div>
-
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+        show_provider_section(
+            flatrate,
+            "STREAM",
+            "Streaming"
+        )
 
         # -------------------------
-        # RENT
+        # Rent
         # -------------------------
-        if rent:
 
-            st.markdown(
-                '<div class="ott-heading">RENT</div>',
-                unsafe_allow_html=True
-            )
-
-            for provider in rent:
-
-                provider_name = provider.get(
-                    "provider_name",
-                    "Unknown"
-                )
-
-                logo_path = provider.get(
-                    "logo_path"
-                )
-
-                if logo_path:
-
-                    logo_url = (
-                        "https://image.tmdb.org/t/p/w92" +
-                        logo_path
-                    )
-
-                    st.markdown(
-                        f"""
-                        <div class="ott-card">
-
-                            <img
-                                src="{html.escape(
-                                    logo_url,
-                                    quote=True
-                                )}"
-                                class="ott-logo"
-                            >
-
-                            <div class="ott-info">
-
-                                <div class="ott-name">
-                                    {html.escape(
-                                        provider_name
-                                    )}
-                                </div>
-
-                                <div class="ott-type">
-                                    Rent
-                                </div>
-
-                            </div>
-
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+        show_provider_section(
+            rent,
+            "RENT",
+            "Rent"
+        )
 
         # -------------------------
-        # BUY
+        # Buy
         # -------------------------
-        if buy:
 
-            st.markdown(
-                '<div class="ott-heading">BUY</div>',
-                unsafe_allow_html=True
-            )
-
-            for provider in buy:
-
-                provider_name = provider.get(
-                    "provider_name",
-                    "Unknown"
-                )
-
-                logo_path = provider.get(
-                    "logo_path"
-                )
-
-                if logo_path:
-
-                    logo_url = (
-                        "https://image.tmdb.org/t/p/w92" +
-                        logo_path
-                    )
-
-                    st.markdown(
-                        f"""
-                        <div class="ott-card">
-
-                            <img
-                                src="{html.escape(
-                                    logo_url,
-                                    quote=True
-                                )}"
-                                class="ott-logo"
-                            >
-
-                            <div class="ott-info">
-
-                                <div class="ott-name">
-                                    {html.escape(
-                                        provider_name
-                                    )}
-                                </div>
-
-                                <div class="ott-type">
-                                    Buy
-                                </div>
-
-                            </div>
-
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+        show_provider_section(
+            buy,
+            "BUY",
+            "Buy"
+        )
 
         # -------------------------
-        # No OTT Data
+        # No Availability
         # -------------------------
-        if not flatrate and not rent and not buy:
+
+        if (
+            not flatrate
+            and not rent
+            and not buy
+        ):
 
             st.info(
-                "No OTT availability information is currently available for India."
+                "No OTT availability information "
+                "is currently available for India."
             )
 
     except TMDBError:
 
         st.info(
-            "OTT availability information is currently unavailable."
+            "OTT availability information "
+            "is currently unavailable."
         )
