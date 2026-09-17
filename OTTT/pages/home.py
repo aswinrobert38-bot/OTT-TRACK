@@ -152,11 +152,18 @@ def movie_card(movie):
             quote=True
         )
 
-        # Markdown image link.
-        # No raw HTML is displayed to the user.
-        st.markdown(
-            f"[![{safe_title}]({safe_poster})](?movie_id={movie_id})"
+        st.image(
+            poster,
+            use_container_width=True
         )
+
+        if st.button(
+            "View movie details",
+            key=f"home_movie_{movie_id}",
+            use_container_width=True
+        ):
+            st.session_state.open_movie_id = movie_id
+            st.rerun()
 
     elif poster:
 
@@ -313,25 +320,6 @@ def show_available_languages():
 # =========================================================
 
 def render_home():
-
-    # =====================================================
-    # HANDLE MOVIE SELECTION
-    # =====================================================
-
-    movie_id = st.query_params.get(
-        "movie_id"
-    )
-
-    if movie_id:
-
-        st.session_state.selected_movie_id = str(
-            movie_id
-        )
-
-        st.query_params.clear()
-
-        st.rerun()
-
 
     # =====================================================
     # HEADER
