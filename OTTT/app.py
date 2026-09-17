@@ -4,10 +4,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from pages.home import render_home
-from pages.search import render_search
-from pages.upcoming import render_upcoming
 from pages.movie_details import render_movie_details
+from services.tmdb_service import get_token
 
+
+# =========================================================
+# PAGE CONFIGURATION
+# =========================================================
 
 st.set_page_config(
     page_title="ReelRoute",
@@ -18,468 +21,351 @@ st.set_page_config(
 
 
 # =========================================================
-# PREMIUM UI
+# GLOBAL CSS
 # =========================================================
 
 st.markdown(
     """
     <style>
 
-    /* ==============================
-       MAIN BACKGROUND
-       ============================== */
+    /* =====================================================
+       MAIN APP
+       ===================================================== */
 
     .stApp {
-        background:
-            radial-gradient(
-                circle at 10% 10%,
-                rgba(124, 58, 237, 0.18),
-                transparent 30%
-            ),
-            radial-gradient(
-                circle at 90% 20%,
-                rgba(236, 72, 153, 0.15),
-                transparent 30%
-            ),
-            radial-gradient(
-                circle at 50% 100%,
-                rgba(59, 130, 246, 0.12),
-                transparent 35%
-            ),
-            #08090d;
+        background: #07080c;
+        color: #f4f5f7;
+    }
 
-        color: #ffffff;
+    .block-container {
+        max-width: 1500px;
+        padding: 28px 42px 70px;
     }
 
 
-    /* ==============================
-       REMOVE STREAMLIT AUTO NAVIGATION
-       ============================== */
-
-    div[data-testid="stSidebarNav"] {
-        display: none !important;
-    }
-
-
-    /* ==============================
+    /* =====================================================
        SIDEBAR
-       ============================== */
+       ===================================================== */
 
-    section[data-testid="stSidebar"] {
-        background:
-            linear-gradient(
-                180deg,
-                #11121a 0%,
-                #0a0b10 100%
-            );
+    [data-testid="stSidebar"] {
+        background: #0b0d12;
+        border-right: 1px solid #1b1e26;
+    }
 
-        border-right: 1px solid rgba(255,255,255,0.08);
+    [data-testid="stSidebar"] .block-container {
+        padding: 28px 18px;
     }
 
 
-    section[data-testid="stSidebar"] > div {
-        padding-top: 1.5rem;
+    /* =====================================================
+       REMOVE STREAMLIT DEFAULT PAGE NAVIGATION
+       ===================================================== */
+
+    [data-testid="stSidebarNav"] {
+        display: none;
     }
 
 
-    /* ==============================
-       OTTTRACK LOGO
-       ============================== */
+    /* =====================================================
+       SIDEBAR BRAND
+       ===================================================== */
 
-    .brand {
+    .sidebar-brand {
         font-size: 28px;
-        font-weight: 900;
-        letter-spacing: -1px;
-
-        background: linear-gradient(
-            90deg,
-            #8b5cf6,
-            #ec4899,
-            #f97316
-        );
-
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-
+        font-weight: 800;
+        letter-spacing: -1.2px;
         margin-bottom: 4px;
     }
 
-
-    .brand-tagline {
-        color: #8f93a3;
-        font-size: 12px;
-        margin-bottom: 30px;
+    .sidebar-subtitle {
+        color: #777d8c;
+        font-size: 10px;
+        letter-spacing: 1px;
+        line-height: 1.5;
     }
 
 
-    /* ==============================
-       SIDEBAR BUTTONS
-       ============================== */
-
-    section[data-testid="stSidebar"] .stButton button {
-
-        background: transparent;
-
-        border: 1px solid transparent;
-
-        color: #aeb2c0;
-
-        border-radius: 10px;
-
-        text-align: left;
-
-        font-size: 14px;
-
-        transition: all 0.2s ease;
-    }
-
-
-    section[data-testid="stSidebar"] .stButton button:hover {
-
-        background:
-            linear-gradient(
-                90deg,
-                rgba(139,92,246,0.20),
-                rgba(236,72,153,0.12)
-            );
-
-        border: 1px solid rgba(139,92,246,0.25);
-
-        color: white;
-
-        transform: translateX(3px);
-    }
-
-
-    /* ==============================
+    /* =====================================================
        HERO
-       ============================== */
+       ===================================================== */
 
     .hero {
-
-        position: relative;
-
-        padding: 55px 50px;
-
-        border-radius: 24px;
-
-        overflow: hidden;
+        padding: 54px 52px;
+        min-height: 320px;
+        border: 1px solid #20232d;
+        border-radius: 28px;
 
         background:
+            radial-gradient(
+                circle at 80% 20%,
+                rgba(145,112,255,.18),
+                transparent 32%
+            ),
             linear-gradient(
-                120deg,
-                rgba(124,58,237,0.28),
-                rgba(236,72,153,0.18),
-                rgba(15,23,42,0.92)
+                135deg,
+                #141722,
+                #0b0d12
             );
 
-        border: 1px solid rgba(255,255,255,0.10);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
 
-        box-shadow:
-            0 25px 70px rgba(0,0,0,0.45);
-
-        margin-bottom: 40px;
+        margin-bottom: 28px;
     }
 
-
-    .hero::before {
-
-        content: "";
-
-        position: absolute;
-
-        width: 280px;
-
-        height: 280px;
-
-        right: -80px;
-
-        top: -100px;
-
-        background: #8b5cf6;
-
-        opacity: 0.18;
-
-        filter: blur(90px);
-
-        border-radius: 50%;
+    .hero-kicker {
+        color: #a78bfa;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.7px;
     }
-
 
     .hero-title {
-
-        position: relative;
-
-        font-size: 52px;
-
-        font-weight: 900;
-
-        letter-spacing: -2px;
-
-        background: linear-gradient(
-            90deg,
-            #ffffff,
-            #d8b4fe,
-            #f9a8d4
-        );
-
-        -webkit-background-clip: text;
-
-        -webkit-text-fill-color: transparent;
+        font-size: clamp(42px, 5.3vw, 72px);
+        font-weight: 800;
+        line-height: .98;
+        letter-spacing: -3px;
+        margin: 12px 0 18px;
     }
-
 
     .hero-text {
-
-        position: relative;
-
-        color: #b5b8c5;
-
-        font-size: 18px;
-
-        margin-top: 8px;
+        color: #9299a9;
+        font-size: 15px;
+        line-height: 1.65;
+        max-width: 720px;
     }
 
 
-    /* ==============================
-       SECTION TITLE
-       ============================== */
+    /* =====================================================
+       SEARCH AREA
+       ===================================================== */
 
-    .section-title {
+    [data-testid="stForm"] {
+        background: #0d1016;
+        border: 1px solid #20232d;
+        border-radius: 18px;
+        padding: 10px;
+        margin-bottom: 28px;
+    }
 
-        font-size: 25px;
+    [data-testid="stTextInput"] input {
+        background: #10131a !important;
+        border: 1px solid #252936 !important;
+        color: white !important;
+        border-radius: 12px !important;
+        min-height: 46px;
+    }
 
-        font-weight: 800;
+    [data-testid="stTextInput"] input:focus {
+        border-color: #8166dd !important;
+    }
 
-        margin-top: 35px;
+    [data-testid="stFormSubmitButton"] button {
+        min-height: 46px;
+        border-radius: 12px;
+        background: #7658d9;
+        border: 1px solid #8b73e6;
+        color: white;
+        font-weight: 700;
+    }
 
-        margin-bottom: 18px;
-
-        color: #ffffff;
+    [data-testid="stFormSubmitButton"] button:hover {
+        background: #846be3;
+        border-color: #a18cf0;
     }
 
 
-    /* ==============================
-       MOVIE TITLE
-       ============================== */
+    /* =====================================================
+       SECTIONS
+       ===================================================== */
+
+    .section-heading {
+        margin-top: 36px;
+        margin-bottom: 16px;
+    }
+
+    .section-heading h2 {
+        margin-bottom: 4px;
+        font-size: 24px;
+        letter-spacing: -.7px;
+    }
+
+    .section-heading p {
+        margin: 0;
+        color: #6f7686;
+        font-size: 12px;
+    }
+
+
+    /* =====================================================
+       MOVIE CARDS
+       ===================================================== */
 
     .movie-title {
-
-        font-size: 16px;
-
+        margin-top: 8px;
+        font-size: 14px;
         font-weight: 700;
 
-        color: #f4f4f5;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
-        margin-top: 10px;
+    .movie-meta {
+        color: #777e8e;
+        font-size: 11px;
+        margin-top: 4px;
 
         white-space: nowrap;
-
         overflow: hidden;
-
         text-overflow: ellipsis;
     }
 
 
-    .movie-meta {
+    /* =====================================================
+       POSTER LINKS
+       ===================================================== */
 
+    a {
+        text-decoration: none !important;
+    }
+
+    a img {
+        border-radius: 11px;
+        width: 100%;
+        aspect-ratio: 2 / 3;
+        object-fit: cover;
+        transition: transform .18s ease,
+                    opacity .18s ease;
+    }
+
+    a img:hover {
+        transform: translateY(-4px);
+        opacity: .88;
+    }
+
+
+    /* =====================================================
+       BROWSE CARDS
+       ===================================================== */
+
+    .browse-card {
+        background: #0e1016;
+        border: 1px solid #1c1f28;
+        border-radius: 14px;
+        padding: 18px;
+        margin-bottom: 12px;
+        text-align: center;
+        color: #e8eaf0;
         font-size: 13px;
+        font-weight: 600;
+    }
 
-        color: #8f93a3;
 
+    /* =====================================================
+       SEARCH RESULTS
+       ===================================================== */
+
+    .search-result-box {
+        background: #0d1016;
+        border: 1px solid #20232d;
+        border-radius: 16px;
+        padding: 16px 18px;
+        margin: 12px 0 24px;
+    }
+
+    .search-result-label {
+        color: #777e8e;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    .search-result-title {
+        color: white;
+        font-size: 20px;
+        font-weight: 700;
         margin-top: 4px;
+    }
 
+
+    /* =====================================================
+       DETAILS
+       ===================================================== */
+
+    .details-title {
+        font-size: 52px;
+        font-weight: 800;
+        letter-spacing: -2.5px;
+        margin-bottom: 8px;
+    }
+
+    .details-subtitle {
+        color: #8b92a1;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .detail-box {
+        background: #0e1016;
+        border: 1px solid #1e222c;
+        border-radius: 14px;
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+
+    .detail-label {
+        color: #666d7c;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 9px;
+        font-weight: 700;
+    }
+
+    .detail-value {
+        margin-top: 6px;
+        font-size: 14px;
+        font-weight: 650;
+    }
+
+
+    /* =====================================================
+       OTT
+       ===================================================== */
+
+    .ott-box {
+        background: #0d1016;
+        border: 1px solid #1d212b;
+        border-radius: 15px;
+        padding: 14px;
         margin-bottom: 10px;
     }
 
 
-    /* ==============================
-       MOVIE POSTER
-       ============================== */
+    /* =====================================================
+       MOBILE
+       ===================================================== */
 
-    [data-testid="stImage"] img {
+    @media(max-width: 900px) {
 
-        border-radius: 12px;
+        .block-container {
+            padding: 18px;
+        }
 
-        transition:
-            transform 0.25s ease,
-            box-shadow 0.25s ease;
+        .hero {
+            padding: 32px;
+        }
 
-        border: 1px solid rgba(255,255,255,0.08);
+        .hero-title {
+            font-size: 46px;
+        }
+
+        .details-title {
+            font-size: 40px;
+        }
+
     }
-
-
-    [data-testid="stImage"] img:hover {
-
-        transform: scale(1.025);
-
-        box-shadow:
-            0 15px 35px rgba(0,0,0,0.55);
-    }
-
-
-    /* ==============================
-       VIEW DETAILS BUTTON
-       ============================== */
-
-    .stButton button {
-
-        border-radius: 9px;
-
-        border: 1px solid rgba(139,92,246,0.30);
-
-        background:
-            linear-gradient(
-                135deg,
-                rgba(139,92,246,0.18),
-                rgba(236,72,153,0.12)
-            );
-
-        color: #eeeeff;
-
-        font-weight: 600;
-
-        transition: all 0.2s ease;
-    }
-
-
-    .stButton button:hover {
-
-        border-color: #8b5cf6;
-
-        background:
-            linear-gradient(
-                135deg,
-                rgba(139,92,246,0.35),
-                rgba(236,72,153,0.25)
-            );
-
-        color: white;
-
-        transform: translateY(-1px);
-    }
-
-
-    /* ==============================
-       INPUTS
-       ============================== */
-
-    .stTextInput input,
-    .stSelectbox div[data-baseweb="select"],
-    .stNumberInput input {
-
-        background: #11131b !important;
-
-        border: 1px solid #292c38 !important;
-
-        border-radius: 10px !important;
-
-        color: white !important;
-    }
-
-
-    .stTextInput input:focus {
-
-        border-color: #8b5cf6 !important;
-
-        box-shadow:
-            0 0 0 1px #8b5cf6 !important;
-    }
-
-
-    /* ==============================
-       METRICS
-       ============================== */
-
-    [data-testid="stMetric"] {
-
-        background:
-            linear-gradient(
-                135deg,
-                rgba(139,92,246,0.10),
-                rgba(236,72,153,0.06)
-            );
-
-        border: 1px solid rgba(255,255,255,0.08);
-
-        border-radius: 14px;
-
-        padding: 15px;
-    }
-
-
-    /* ==============================
-       DIVIDER
-       ============================== */
-
-    hr {
-
-        border-color: rgba(255,255,255,0.08);
-    }
-
-
-    /* ==============================
-       FALLBACK POSTER
-       ============================== */
-
-    .poster-fallback {
-
-        height: 280px;
-
-        border-radius: 12px;
-
-        background:
-            linear-gradient(
-                135deg,
-                #171923,
-                #0e1016
-            );
-
-        border: 1px solid rgba(255,255,255,0.08);
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        color: #666b7a;
-
-        font-size: 12px;
-
-        font-weight: 700;
-    }
-
-
-    /* ==============================
-       SCROLLBAR
-       ============================== */
-
-    ::-webkit-scrollbar {
-
-        width: 7px;
-    }
-
-
-    ::-webkit-scrollbar-track {
-
-        background: #08090d;
-    }
-
-
-    ::-webkit-scrollbar-thumb {
-
-        background: #292c38;
-
-        border-radius: 10px;
-    }
-
-
-    ::-webkit-scrollbar-thumb:hover {
-
-        background: #8b5cf6;
-    }
-
 
     </style>
     """,
@@ -491,39 +377,86 @@ st.markdown(
 # SESSION STATE
 # =========================================================
 
-if "page" not in st.session_state:
-    st.session_state.page = "home"
-
 if "selected_movie_id" not in st.session_state:
     st.session_state.selected_movie_id = None
 
 
 # =========================================================
-# CUSTOM SIDEBAR
+# MOVIE CLICK HANDLER
+# =========================================================
+
+movie_id = st.query_params.get("movie_id")
+
+if movie_id:
+
+    st.session_state.selected_movie_id = str(movie_id)
+
+    st.query_params.clear()
+
+    st.rerun()
+
+
+# =========================================================
+# SIDEBAR
+# ONLY BRAND + STATUS
 # =========================================================
 
 with st.sidebar:
 
     st.markdown(
-        '<div class="brand">ReelRoute</div>',
-        unsafe_allow_html=True
+        "### ReelRoute"
     )
 
-    st.markdown(
-        '<div class="brand-tagline">'
-        'Every Movie. Every Platform. One Place.'
-        '</div>',
-        unsafe_allow_html=True
+    st.caption(
+        "MOVIE & OTT DISCOVERY PLATFORM"
     )
 
     st.divider()
 
-    st.caption("ReelRoute")
-    st.caption("Discover • Explore • Watch")
+    st.markdown(
+        "#### About"
+    )
+
+    st.caption(
+        "Discover movies, explore their details "
+        "and find OTT availability in India."
+    )
+
+    st.divider()
+
+    st.markdown(
+        "#### Data"
+    )
+
+    if get_token():
+
+        st.success(
+            "TMDB connected"
+        )
+
+    else:
+
+        st.error(
+            "TMDB token missing"
+        )
+
+        st.caption(
+            "Add TMDB_API_KEY to .env and restart the app."
+        )
+
+    st.divider()
+
+    st.caption(
+        "ReelRoute"
+    )
+
+    st.caption(
+        "Every Movie. Every Platform. One Place."
+    )
 
 
 # =========================================================
-# PAGE ROUTING
+# SINGLE-PAGE APPLICATION
 # =========================================================
 
 if st.session_state.selected_movie_id is not None:
@@ -531,14 +464,6 @@ if st.session_state.selected_movie_id is not None:
     render_movie_details(
         st.session_state.selected_movie_id
     )
-
-elif st.session_state.page == "search":
-
-    render_search()
-
-elif st.session_state.page == "upcoming":
-
-    render_upcoming()
 
 else:
 
