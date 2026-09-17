@@ -29,12 +29,15 @@ st.markdown(
     <style>
 
     /* =====================================================
-       GLOBAL
+       GLOBAL — PREMIUM CINEMATIC
        ===================================================== */
 
     .stApp {
-        background: #07080c;
-        color: #f4f5f7;
+        background:
+            radial-gradient(circle at 12% 8%, rgba(118, 76, 255, .16), transparent 30%),
+            radial-gradient(circle at 88% 18%, rgba(0, 201, 255, .10), transparent 28%),
+            linear-gradient(135deg, #05060a 0%, #090b12 48%, #07080d 100%);
+        color: #f7f8fb;
     }
 
     .block-container {
@@ -48,14 +51,15 @@ st.markdown(
        ===================================================== */
 
     [data-testid="stSidebar"] {
-        background: #0b0d12;
-        border-right: 1px solid #1c1f28;
+        background:
+            linear-gradient(180deg, #0b0d15 0%, #080a10 55%, #06070c 100%);
+        border-right: 1px solid rgba(135, 105, 255, .22);
+        box-shadow: 8px 0 35px rgba(0, 0, 0, .25);
     }
 
     [data-testid="stSidebar"] .block-container {
         padding: 28px 18px;
     }
-
 
     [data-testid="stSidebarNav"] {
         display: none;
@@ -67,32 +71,46 @@ st.markdown(
        ===================================================== */
 
     [data-testid="stForm"] {
-        background: #0d1016;
-        border: 1px solid #20232d;
-        border-radius: 16px;
+        background: linear-gradient(
+            135deg,
+            rgba(18, 21, 31, .96),
+            rgba(11, 14, 22, .96)
+        );
+        border: 1px solid rgba(126, 91, 255, .28);
+        border-radius: 18px;
         padding: 10px;
         margin: 10px 0 30px;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, .24);
     }
 
     [data-testid="stTextInput"] input {
-        background: #10131a !important;
-        border: 1px solid #252936 !important;
+        background: #0f121b !important;
+        border: 1px solid #292d3b !important;
         color: #ffffff !important;
-        border-radius: 11px !important;
+        border-radius: 12px !important;
         min-height: 46px;
+    }
+
+    [data-testid="stTextInput"] input:focus {
+        border-color: #8b6cff !important;
+        box-shadow: 0 0 0 1px rgba(139, 108, 255, .45) !important;
     }
 
     [data-testid="stFormSubmitButton"] button {
         min-height: 46px;
-        border-radius: 11px;
-        background: #7658d9;
-        border: 1px solid #8d76e5;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #7658d9, #9b62ff);
+        border: 1px solid #a783ff;
         color: white;
-        font-weight: 700;
+        font-weight: 750;
+        box-shadow: 0 8px 22px rgba(118, 88, 217, .28);
+        transition: all .2s ease;
     }
 
     [data-testid="stFormSubmitButton"] button:hover {
-        background: #856ce5;
+        background: linear-gradient(135deg, #856ce5, #aa73ff);
+        transform: translateY(-1px);
+        box-shadow: 0 10px 28px rgba(118, 88, 217, .38);
     }
 
 
@@ -108,14 +126,21 @@ st.markdown(
         width: 100%;
         aspect-ratio: 2 / 3;
         object-fit: cover;
-        border-radius: 12px;
-        transition: transform .18s ease,
-                    opacity .18s ease;
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, .08);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, .30);
+        transition:
+            transform .22s ease,
+            opacity .22s ease,
+            box-shadow .22s ease,
+            border-color .22s ease;
     }
 
     a img:hover {
-        transform: translateY(-5px);
-        opacity: .86;
+        transform: translateY(-7px) scale(1.015);
+        opacity: .94;
+        border-color: rgba(151, 119, 255, .65);
+        box-shadow: 0 18px 38px rgba(71, 46, 150, .34);
     }
 
 
@@ -125,15 +150,16 @@ st.markdown(
 
     .movie-title {
         font-size: 14px;
-        font-weight: 700;
-        margin-top: 8px;
+        font-weight: 750;
+        margin-top: 9px;
+        color: #f3f4f8;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
     .movie-meta {
-        color: #777e8e;
+        color: #858da0;
         font-size: 11px;
         margin-top: 4px;
         margin-bottom: 18px;
@@ -146,15 +172,23 @@ st.markdown(
 
     .details-title {
         font-size: 52px;
-        font-weight: 800;
+        font-weight: 850;
         letter-spacing: -2px;
         line-height: 1;
         margin-bottom: 12px;
+        background: linear-gradient(
+            90deg,
+            #ffffff 0%,
+            #cfc6ff 55%,
+            #8fe8ff 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 
     .details-description {
-        color: #9299a9;
-        line-height: 1.7;
+        color: #a3aabd;
+        line-height: 1.75;
         font-size: 14px;
     }
 
@@ -164,24 +198,29 @@ st.markdown(
        ===================================================== */
 
     .info-box {
-        background: #0d1016;
-        border: 1px solid #1e222c;
-        border-radius: 14px;
+        background: linear-gradient(
+            145deg,
+            rgba(18, 21, 31, .98),
+            rgba(11, 14, 22, .98)
+        );
+        border: 1px solid rgba(139, 108, 255, .20);
+        border-radius: 15px;
         padding: 15px;
         min-height: 82px;
         margin-bottom: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, .18);
     }
 
     .info-label {
-        color: #656c7b;
+        color: #777f93;
         font-size: 9px;
-        font-weight: 700;
+        font-weight: 750;
         text-transform: uppercase;
         letter-spacing: 1px;
     }
 
     .info-value {
-        color: #f0f1f4;
+        color: #f3f4f8;
         font-size: 14px;
         font-weight: 650;
         margin-top: 7px;
@@ -193,11 +232,16 @@ st.markdown(
        ===================================================== */
 
     .ott-card {
-        background: #0d1016;
-        border: 1px solid #1d212b;
-        border-radius: 14px;
+        background: linear-gradient(
+            135deg,
+            rgba(19, 22, 32, .98),
+            rgba(10, 13, 21, .98)
+        );
+        border: 1px solid rgba(92, 207, 255, .16);
+        border-radius: 15px;
         padding: 15px;
         margin-bottom: 10px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .20);
     }
 
 
@@ -206,13 +250,56 @@ st.markdown(
        ===================================================== */
 
     .browse-card {
-        background: #0d1016;
-        border: 1px solid #1d212b;
-        border-radius: 13px;
+        background: linear-gradient(
+            145deg,
+            rgba(18, 21, 31, .98),
+            rgba(10, 13, 21, .98)
+        );
+        border: 1px solid rgba(139, 108, 255, .18);
+        border-radius: 14px;
         padding: 17px;
         text-align: center;
         margin-bottom: 12px;
-        font-weight: 600;
+        font-weight: 650;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, .18);
+        transition: transform .2s ease, border-color .2s ease;
+    }
+
+    .browse-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(139, 108, 255, .45);
+    }
+
+
+    /* =====================================================
+       BUTTONS
+       ===================================================== */
+
+    .stButton > button {
+        border-radius: 11px !important;
+        border: 1px solid rgba(139, 108, 255, .24) !important;
+        background: rgba(18, 21, 31, .9) !important;
+        color: #f3f4f8 !important;
+        transition: all .18s ease !important;
+    }
+
+    .stButton > button:hover {
+        border-color: rgba(139, 108, 255, .62) !important;
+        background: rgba(34, 29, 55, .95) !important;
+        transform: translateY(-1px);
+    }
+
+
+    /* =====================================================
+       DIVIDERS / HEADINGS
+       ===================================================== */
+
+    hr {
+        border-color: rgba(139, 108, 255, .14) !important;
+    }
+
+    h1, h2, h3 {
+        letter-spacing: -.5px;
     }
 
 
@@ -247,18 +334,14 @@ if "selected_movie_id" not in st.session_state:
 
 
 # =========================================================
-# POSTER CLICK HANDLER
+# SAME-PAGE MOVIE SELECTION
 # =========================================================
 
 movie_id = st.query_params.get("movie_id")
 
 if movie_id:
-
     st.session_state.selected_movie_id = str(movie_id)
-
     st.query_params.clear()
-
-    st.rerun()
 
 
 # =========================================================
@@ -320,15 +403,18 @@ with st.sidebar:
 
 
 # =========================================================
-# SINGLE PAGE ROUTING
+# SAME-PAGE CONTENT
 # =========================================================
 
+# Always render the main Home interface.
+render_home()
+
+# If a movie poster is selected, show its details
+# underneath the existing Home content.
 if st.session_state.selected_movie_id is not None:
+
+    st.divider()
 
     render_movie_details(
         st.session_state.selected_movie_id
     )
-
-else:
-
-    render_home()
