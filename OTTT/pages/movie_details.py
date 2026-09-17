@@ -14,12 +14,18 @@ def render_movie_details(movie_id):
     # Back Button
     # -------------------------
 
-    if st.button("← Back", key="back_movie"):
+    if st.button(
+    "← Back",
+    key="back_movie"
+):
 
-        st.session_state.selected_movie_id = None
-        st.query_params.clear()
-        st.rerun()
+    st.session_state.selected_movie_id = None
 
+    st.session_state.page = "home"
+
+    st.session_state.poster_view_version += 1
+
+    st.rerun()
     try:
 
         movie = get_movie_details(movie_id)
