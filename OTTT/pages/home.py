@@ -224,7 +224,10 @@ def show_movies(
 
         with columns[index % 6]:
 
-            movie_card(movie)
+            movie_card(
+                movie,
+                key_suffix=f"{title}_{index}"
+            )
 
 
 # =========================================================
@@ -265,7 +268,10 @@ def show_search_results(
 
         with columns[index % 6]:
 
-            movie_card(movie)
+            movie_card(
+                movie,
+                key_suffix=f"search_{index}"
+            )
 
 
 # =========================================================
