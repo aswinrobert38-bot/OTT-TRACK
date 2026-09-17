@@ -1,85 +1,293 @@
 import streamlit as st
-from services.tmdb_service import TMDBError, get_movie, normalize_details
-from utils.helpers import safe_text
 
-
-def _status_badge(status):
-    if status == "Date Not Announced":
-        return '<span class="badge badge-yellow">DATE TBD</span>'
-    if status == "Confirmed":
-        return '<span class="badge badge-green">CONFIRMED</span>'
-    return '<span class="badge badge-gray">NOT CONFIRMED</span>'
+from services.tmdb_service import (
+    TMDBError,
+    get_movie_details,
+    get_watch_providers
+)
 
 
 def render_movie_details(movie_id):
-    if st.button("← Back", key="back_movie"):
+
+    if st.button("← Back"):
+
         st.session_state.selected_movie_id = None
         st.rerun()
 
     try:
-        movie = normalize_details(get_movie(int(movie_id)))
-    except (TMDBError, ValueError) as exc:
-        st.error(str(exc))
+
+        movie = get_movie_details(movie_id)
+
+    except TMDBError as error:
+
+        st.error(str(error))
         return
 
-    if movie.get("backdrop"):
-        st.image(movie["backdrop"], use_container_width=True)
+    title = movie.get("title") or "Untitled"
 
-    left, right = st.columns([1, 2.25], gap="large")
+    overview = movie.get("overview") or "No description available."
+
+    poster = movie.get("poster_url")
+
+    backdrop = movie.get("backdrop_url")
+
+    rating = movie.get("rating", 0)
+
+    release_date = movie.get("release_date") or "Not available"
+
+    original_language = (
+        movie.get("original_language") or
+        "Not available"
+    )
+
+    genres = movie.get("genres", [])
+
+    genre_names = [
+        genre.get("name")
+        for genre in genres
+    ]
+
+    genre_text = ", ".join(genre_names)
+
+    # Backdrop
+    if backdrop:
+
+        st.image(
+            backdrop,
+            use_container_width=True
+        )
+
+    # Title
+    st.title(title)
+
+    # Basic information
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric(
+            "Rating",
+            str(round(float(rating), 1))
+        )
+
+    with col2:
+        st.metric(
+            "Release",
+            release_date
+        )
+
+    with col3:
+        st.metric(
+            "Language",
+            original_language.upper()
+        )
+
+    with col4:
+        st.metric(
+            "Runtime",
+            str(movie.get("runtime", "N/A")) +
+            " min"
+        )
+
+    st.divider()
+
+    # Main content
+    left, right = st.columns([1, 2])
+
     with left:
-        if movie.get("poster"):
-            st.image(movie["poster"], use_container_width=True)
+
+        if poster:
+
+            st.image(
+                poster,
+                use_container_width=True
+            )
+
         else:
-            st.markdown('<div class="poster-fallback large"><span>NO<br>POSTER</span></div>', unsafe_allow_html=True)
+
+            st.markdown(
+                """
+                <div class="poster-fallback">
+                    NO POSTER
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
     with right:
-        st.markdown(f'<div class="hero-kicker">{safe_text(movie.get("year"))} · {safe_text(movie.get("language"))}</div>', unsafe_allow_html=True)
-        st.markdown(f'<h1 class="detail-title">{safe_text(movie.get("title"))}</h1>', unsafe_allow_html=True)
-        if movie.get("tagline"):
-            st.markdown(f'<p class="tagline-detail">{safe_text(movie["tagline"])}</p>', unsafe_allow_html=True)
-        st.markdown(f'<div class="detail-rating">★ {float(movie.get("rating") or 0):.1f} <span>TMDB · {int(movie.get("vote_count") or 0):,} votes</span></div>', unsafe_allow_html=True)
-        st.write(movie.get("overview", ""))
 
-        a, b, c, d = st.columns(4)
-        cards = [
-            (a, "Director", movie.get("director")),
-            (b, "Genres", ", ".join(movie.get("genres", [])) or "Not listed"),
-            (c, "Theatrical", movie.get("theatrical", "TBD")),
-            (d, "Runtime", f'{movie.get("runtime")} min' if movie.get("runtime") else "Not listed"),
+        st.subheader("About the Movie")
+
+        st.write(overview)
+
+        if genre_text:
+
+            st.write(
+                "**Genre:** " +
+                genre_text
+            )
+
+        tagline = movie.get("tagline")
+
+        if tagline:
+
+            st.write(
+                "**Tagline:** " +
+                tagline
+            )
+
+    st.divider()
+
+    # Cast and Director
+    credits = movie.get("credits", {})
+
+    cast = credits.get("cast", [])
+
+    crew = credits.get("crew", [])
+
+    directors = [
+        person.get("name")
+        for person in crew
+        if person.get("job") == "Director"
+    ]
+
+    st.subheader("Cast & Crew")
+
+    if directors:
+
+        st.write(
+            "**Director:** " +
+            ", ".join(directors)
+        )
+
+    if cast:
+
+        cast_names = [
+            person.get("name")
+            for person in cast[:10]
         ]
-        for col, label, value in cards:
-            with col:
-                st.markdown(f'<div class="info-card"><div class="info-label">{label}</div><div class="info-value">{safe_text(value)}</div></div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="section-heading detail-section"><h2>Where to watch in India</h2><span>Current availability from TMDB / JustWatch · OTT release date is not inferred</span></div>', unsafe_allow_html=True)
+        st.write(
+            "**Cast:** " +
+            ", ".join(cast_names)
+        )
 
-    watch = movie.get("watch", [])
-    if not watch:
-        st.markdown('<div class="empty-state"><h3>No current India provider listed</h3><p>TMDB does not currently list an India streaming, rent, or purchase provider for this title.</p></div>', unsafe_allow_html=True)
-    else:
-        for row in watch:
-            st.markdown('<div class="ott-row">', unsafe_allow_html=True)
-            p1, p2, p3, p4 = st.columns([2.4, 1.2, 1.2, 1.4], vertical_alignment="center")
-            with p1:
-                if row.get("logo"):
-                    st.image(row["logo"], width=48)
-                st.markdown(f'<div class="ott-name">{safe_text(row["platform"])}</div><div class="ott-type">{safe_text(row["type"])}</div>', unsafe_allow_html=True)
-            with p2:
-                st.markdown('<div class="mini-label">OTT date</div><div class="mini-value">TBD</div>', unsafe_allow_html=True)
-            with p3:
-                st.markdown(f'<div class="mini-label">Status</div>{_status_badge(row["status"]) }', unsafe_allow_html=True)
-            with p4:
-                if row.get("source_url"):
-                    st.link_button("View source", row["source_url"], use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+    # Trailer
+    videos = movie.get("videos", {})
 
-    st.markdown('<div class="section-heading detail-section"><h2>Movie information</h2><span>Metadata supplied by TMDB</span></div>', unsafe_allow_html=True)
-    x, y = st.columns(2)
-    with x:
-        langs = ", ".join(movie.get("languages", [])) or "Not listed"
-        cast = ", ".join(movie.get("cast", [])) or "Not listed"
-        st.markdown(f'<div class="info-card"><div class="info-label">TMDB-listed languages</div><div class="info-value">{safe_text(langs)}</div></div>', unsafe_allow_html=True)
-    with y:
-        st.markdown(f'<div class="info-card"><div class="info-label">Cast</div><div class="info-value">{safe_text(cast)}</div></div>', unsafe_allow_html=True)
+    video_results = videos.get(
+        "results",
+        []
+    )
 
-    st.caption("Data and images: TMDB. OTT availability: TMDB / JustWatch. This product is not endorsed or certified by TMDB.")
+    trailer = None
+
+    for video in video_results:
+
+        if (
+            video.get("site") == "YouTube"
+            and video.get("type") == "Trailer"
+        ):
+
+            trailer = video
+            break
+
+    if trailer:
+
+        st.divider()
+
+        st.subheader("Trailer")
+
+        youtube_url = (
+            "https://www.youtube.com/watch?v=" +
+            trailer.get("key")
+        )
+
+        st.video(youtube_url)
+
+    # OTT providers
+    st.divider()
+
+    st.subheader("Where to Watch")
+
+    try:
+
+        provider_data = get_watch_providers(movie_id)
+
+        results = provider_data.get(
+            "results",
+            {}
+        )
+
+        india = results.get(
+            "IN",
+            {}
+        )
+
+        flatrate = india.get(
+            "flatrate",
+            []
+        )
+
+        rent = india.get(
+            "rent",
+            []
+        )
+
+        buy = india.get(
+            "buy",
+            []
+        )
+
+        if flatrate:
+
+            st.write("### Stream")
+
+            for provider in flatrate:
+
+                st.write(
+                    "• " +
+                    provider.get(
+                        "provider_name",
+                        "Unknown"
+                    )
+                )
+
+        if rent:
+
+            st.write("### Rent")
+
+            for provider in rent:
+
+                st.write(
+                    "• " +
+                    provider.get(
+                        "provider_name",
+                        "Unknown"
+                    )
+                )
+
+        if buy:
+
+            st.write("### Buy")
+
+            for provider in buy:
+
+                st.write(
+                    "• " +
+                    provider.get(
+                        "provider_name",
+                        "Unknown"
+                    )
+                )
+
+        if not flatrate and not rent and not buy:
+
+            st.info(
+                "No OTT availability information is currently available for India."
+            )
+
+    except TMDBError:
+
+        st.info(
+            "OTT availability information is currently unavailable."
+        )
