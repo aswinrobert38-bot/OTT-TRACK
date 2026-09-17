@@ -163,7 +163,6 @@ def movie_card(movie, key_suffix=""):
             use_container_width=True
         ):
             st.session_state.open_movie_id = movie_id
-            st.rerun()
 
     elif poster:
 
@@ -226,7 +225,7 @@ def show_movies(
 
             movie_card(
                 movie,
-                key_suffix=f"{title}_{index}"
+                key_suffix=f"section_{index}_{title.replace(' ', '_')}"
             )
 
 
