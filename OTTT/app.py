@@ -316,47 +316,28 @@ st.markdown(
     }
 
 
-    /* ==============================
-       VIEW DETAILS BUTTON
-       ============================== */
+   /* ==============================
+   MOVIE POSTER CLICK BUTTON
+   ============================== */
 
-    .stButton button {
+.movie-card-button button {
+    background: transparent !important;
+    border: none !important;
+    color: transparent !important;
+    height: 0px !important;
+    min-height: 0px !important;
+    padding: 0px !important;
+    margin: 0px !important;
+    box-shadow: none !important;
+}
 
-        border-radius: 9px;
-
-        border: 1px solid rgba(139,92,246,0.30);
-
-        background:
-            linear-gradient(
-                135deg,
-                rgba(139,92,246,0.18),
-                rgba(236,72,153,0.12)
-            );
-
-        color: #eeeeff;
-
-        font-weight: 600;
-
-        transition: all 0.2s ease;
-    }
-
-
-    .stButton button:hover {
-
-        border-color: #8b5cf6;
-
-        background:
-            linear-gradient(
-                135deg,
-                rgba(139,92,246,0.35),
-                rgba(236,72,153,0.25)
-            );
-
-        color: white;
-
-        transform: translateY(-1px);
-    }
-
+.movie-card-button button:hover {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    transform: none !important;
+}
 
     /* ==============================
        INPUTS
