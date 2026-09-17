@@ -171,10 +171,7 @@ def render_movie_details(movie_id):
         key="back_movie"
     ):
 
-        st.session_state.selected_movie_id = None
-
-        st.query_params.clear()
-
+        st.session_state.open_movie_id = None
         st.rerun()
 
 
