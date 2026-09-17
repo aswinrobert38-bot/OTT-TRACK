@@ -92,17 +92,20 @@ def get_language(movie):
 
 def get_movie_languages(movie):
     """
-    Get actual language metadata when it is available.
+    Get actual language metadata when available.
     Does not invent provider-specific languages.
     """
 
     languages = movie.get("spoken_languages")
 
     if isinstance(languages, list):
+
         result = []
 
         for item in languages:
+
             if isinstance(item, dict):
+
                 name = (
                     item.get("english_name")
                     or item.get("name")
@@ -128,6 +131,7 @@ def get_movie_languages(movie):
 # =========================================================
 
 def movie_card(movie, key_suffix=""):
+
     movie_id = movie.get("id")
 
     title = get_title(movie)
@@ -152,17 +156,27 @@ def movie_card(movie, key_suffix=""):
             quote=True
         )
 
+        # Display poster
         st.image(
             poster,
             use_container_width=True
         )
+
+        # -------------------------------------------------
+        # MOVIE DETAILS BUTTON
+        # -------------------------------------------------
 
         if st.button(
             "View movie details",
             key=f"home_movie_{movie_id}_{key_suffix}",
             use_container_width=True
         ):
+
+            # Store selected movie ID
             st.session_state.open_movie_id = movie_id
+
+            # Force app.py to process the dialog
+            st.rerun()
 
     elif poster:
 
@@ -225,7 +239,10 @@ def show_movies(
 
             movie_card(
                 movie,
-                key_suffix=f"section_{index}_{title.replace(' ', '_')}"
+                key_suffix=(
+                    f"section_{index}_"
+                    f"{title.replace(' ', '_')}"
+                )
             )
 
 
@@ -274,7 +291,7 @@ def show_search_results(
 
 
 # =========================================================
-# LANGUAGE SECTION
+# AVAILABLE LANGUAGES
 # =========================================================
 
 def show_available_languages():
@@ -304,116 +321,68 @@ def show_available_languages():
         "Odia",
     ]
 
-    language_columns = st.columns(
+    columns = st.columns(
         4,
-        gap="medium"
+        gap="small"
     )
 
-    for index, language in enumerate(
-        languages
-    ):
+    for index, language in enumerate(languages):
 
-        with language_columns[index % 4]:
+        with columns[index % 4]:
 
             st.markdown(
-                f"**{language}**"
+                f"""
+                <div class="language-card">
+                    {html.escape(language)}
+                </div>
+                """,
+                unsafe_allow_html=True
             )
 
 
 # =========================================================
-# MAIN HOME PAGE
+# SEARCH AREA
 # =========================================================
 
-def render_home():
+def search_area():
 
-    # =====================================================
-    # HEADER
-    # =====================================================
-
-    st.title(
-        "ReelRoute"
-    )
-
-    st.subheader(
-        "Every Movie. Every Platform. One Place."
+    st.markdown(
+        """
+        <div class="search-heading">
+            Search Movies
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
     st.caption(
-        "Discover movies, explore complete details, "
-        "and find where they are available."
+        "Search for any movie and explore its details and OTT availability."
     )
 
-
-    # =====================================================
-    # SEARCH BAR
-    # =====================================================
-
     with st.form(
-        "main_movie_search",
+        "movie_search_form",
         clear_on_submit=False
     ):
 
-        search_col, language_col, button_col = st.columns(
-            [5.2, 1.5, 1.1],
-            vertical_alignment="bottom"
+        col1, col2 = st.columns(
+            [5, 1],
+            gap="small"
         )
 
-        # -------------------------------------------------
-        # SEARCH INPUT
-        # -------------------------------------------------
-
-        with search_col:
+        with col1:
 
             query = st.text_input(
-                "Movie Search",
-                placeholder=(
-                    "Search any movie — "
-                    "Spider-Man, Leo, Jailer, Interstellar..."
-                ),
+                "Movie name",
+                placeholder="Search any movie...",
                 label_visibility="collapsed"
             )
 
-        # -------------------------------------------------
-        # LANGUAGE FILTER
-        # -------------------------------------------------
-
-        with language_col:
-
-            language_filter = st.selectbox(
-                "Language",
-                [
-                    "All Languages",
-                    "Tamil",
-                    "Telugu",
-                    "Malayalam",
-                    "Kannada",
-                    "Hindi",
-                    "English",
-                    "Bengali",
-                    "Marathi",
-                    "Punjabi",
-                    "Gujarati",
-                    "Bhojpuri",
-                    "Odia",
-                ],
-                label_visibility="collapsed"
-            )
-
-        # -------------------------------------------------
-        # SEARCH BUTTON
-        # -------------------------------------------------
-
-        with button_col:
+        with col2:
 
             search_clicked = st.form_submit_button(
                 "Search",
                 use_container_width=True
             )
-
-
-    # =====================================================
-    # SEARCH
-    # =====================================================
 
     if search_clicked:
 
@@ -423,53 +392,63 @@ def render_home():
                 "Please enter a movie name."
             )
 
-        else:
+            return
 
-            try:
+        try:
 
-                selected_language = None
+            data = search_movies(
+                query.strip()
+            )
 
-                if language_filter != "All Languages":
+            movies = get_results(data)
 
-                    language_codes = {
-                        "Tamil": "ta",
-                        "Telugu": "te",
-                        "Malayalam": "ml",
-                        "Kannada": "kn",
-                        "Hindi": "hi",
-                        "English": "en",
-                        "Bengali": "bn",
-                        "Marathi": "mr",
-                        "Punjabi": "pa",
-                        "Gujarati": "gu",
-                        "Bhojpuri": "hi",
-                        "Odia": "or",
-                    }
+            show_search_results(
+                query.strip(),
+                movies
+            )
 
-                    selected_language = language_codes.get(
-                        language_filter
-                    )
+        except TMDBError:
 
-                data = search_movies(
-                    query.strip(),
-                    language=selected_language
-                )
+            st.error(
+                "Unable to search movies right now. "
+                "Please check your TMDB connection."
+            )
 
-                movies = get_results(
-                    data
-                )
+        except Exception as error:
 
-                show_search_results(
-                    query.strip(),
-                    movies
-                )
+            st.error(
+                f"Search failed: {error}"
+            )
 
-            except TMDBError as error:
 
-                st.error(
-                    str(error)
-                )
+# =========================================================
+# HOME PAGE
+# =========================================================
 
+def render_home():
+
+    # =====================================================
+    # HERO
+    # =====================================================
+
+    st.markdown(
+        """
+        <div class="hero-title">
+            ReelRoute
+        </div>
+
+        <div class="hero-text">
+            Every Movie. Every Platform. One Place.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # =====================================================
+    # SEARCH
+    # =====================================================
+
+    search_area()
 
     # =====================================================
     # TRENDING
@@ -494,7 +473,6 @@ def render_home():
             "Trending movies could not be loaded."
         )
 
-
     # =====================================================
     # RECENTLY RELEASED
     # =====================================================
@@ -517,7 +495,6 @@ def render_home():
         st.warning(
             "Recently released movies could not be loaded."
         )
-
 
     # =====================================================
     # POPULAR
@@ -542,7 +519,6 @@ def render_home():
             "Popular movies could not be loaded."
         )
 
-
     # =====================================================
     # COMING SOON
     # =====================================================
@@ -566,13 +542,11 @@ def render_home():
             "Upcoming movies could not be loaded."
         )
 
-
     # =====================================================
     # AVAILABLE LANGUAGES
     # =====================================================
 
     show_available_languages()
-
 
     # =====================================================
     # OTT AVAILABILITY INFORMATION
@@ -590,6 +564,6 @@ def render_home():
     )
 
     st.info(
-        "Select a movie poster to view its available streaming, "
+        "Select a movie to view its available streaming, "
         "rental, and purchase platforms."
     )
