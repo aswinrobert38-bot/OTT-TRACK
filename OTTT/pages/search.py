@@ -10,7 +10,29 @@ from services.tmdb_service import (
 )
 
 
+def open_movie(movie_id):
+
+    if not movie_id:
+        return
+
+    st.session_state.selected_movie_id = str(movie_id)
+
+    st.session_state.page = "search"
+
+    st.rerun()
+
+
 def render_search():
+
+    # =========================================================
+    # SEARCH HEADER
+    # =========================================================
+
+    query = st.session_state.get(
+        "global_search",
+        ""
+    ).strip()
+
 
     st.markdown(
         """
@@ -20,13 +42,11 @@ def render_search():
                 DISCOVER
             </div>
 
-            <h1>
-                Search movies
-            </h1>
+            <h1>Search movies</h1>
 
             <p>
-                Search TMDB to find movies across years,
-                languages and titles.
+                Search movies from TMDB and explore
+                where they are available.
             </p>
 
         </div>
@@ -35,30 +55,14 @@ def render_search():
     )
 
 
-    # =====================================================
-    # SEARCH CONTROLS
-    # =====================================================
+    # =========================================================
+    # FILTERS
+    # =========================================================
 
-    c1, c2, c3 = st.columns([2.5, 1, 1])
+    c1, c2 = st.columns([1, 1])
 
 
     with c1:
-
-        query = st.session_state.get(
-            "global_search",
-            ""
-        )
-
-
-        st.text_input(
-            "Movie title",
-            value=query,
-            disabled=True,
-            key="search_display"
-        )
-
-
-    with c2:
 
         year = st.number_input(
             "Year",
@@ -70,7 +74,7 @@ def render_search():
         )
 
 
-    with c3:
+    with c2:
 
         language = st.text_input(
             "Language code",
@@ -79,11 +83,11 @@ def render_search():
         )
 
 
-    # =====================================================
-    # EMPTY SEARCH
-    # =====================================================
+    # =========================================================
+    # QUERY CHECK
+    # =========================================================
 
-    if not query.strip():
+    if not query:
 
         st.markdown(
             """
@@ -94,11 +98,8 @@ def render_search():
                 </h3>
 
                 <p>
-                    Search from the bar above.
-                    Try <b>Leo</b>,
-                    <b>Interstellar</b>,
-                    <b>Jailer</b>
-                    or any other title.
+                    Use the search bar above to find
+                    movies.
                 </p>
 
             </div>
@@ -109,25 +110,30 @@ def render_search():
         return
 
 
-    # =====================================================
-    # TMDB SEARCH
-    # =====================================================
+    # =========================================================
+    # SEARCH TMDB
+    # =========================================================
 
     try:
 
         results = search_movies(
-            query.strip(),
+            query,
             year=year if year else None,
-            language=language.strip().lower() or None
+            language=language.strip().lower()
+            if language.strip()
+            else None
         )
 
+    except TMDBError as exc:
 
-    except TMDBError as error:
-
-        st.error(str(error))
+        st.error(str(exc))
 
         return
 
+
+    # =========================================================
+    # NORMALIZE
+    # =========================================================
 
     movies = [
         normalize_movie(movie)
@@ -135,15 +141,13 @@ def render_search():
     ]
 
 
-    # =====================================================
-    # RESULT COUNT
-    # =====================================================
-
     st.markdown(
         '<div class="result-line">'
         '<b>' +
         str(len(movies)) +
-        '</b> result(s)'
+        '</b> result(s) for <b>' +
+        html.escape(query) +
+        '</b>'
         '</div>',
         unsafe_allow_html=True
     )
@@ -158,23 +162,21 @@ def render_search():
         return
 
 
-    # =====================================================
+    # =========================================================
     # MOVIE GRID
-    # =====================================================
+    # =========================================================
 
-    columns = st.columns(
-        6,
-        gap="medium"
-    )
+    columns = st.columns(6, gap="medium")
 
 
-    for index, movie in enumerate(movies):
+    for index, movie in enumerate(movies[:24]):
 
         with columns[index % 6]:
 
-            title = movie.get(
-                "title"
-            ) or "Untitled"
+            title = (
+                movie.get("title")
+                or "Untitled"
+            )
 
 
             release_date = (
@@ -203,7 +205,7 @@ def render_search():
 
 
             # =================================================
-            # CLICKABLE POSTER
+            # POSTER
             # =================================================
 
             if poster and movie_id:
@@ -211,7 +213,7 @@ def render_search():
                 click_key = (
                     "search_poster_"
                     + str(
-                        st.session_state.poster_view_version
+                        st.session_state.poster_version
                     )
                     + "_"
                     + str(movie_id)
@@ -228,13 +230,7 @@ def render_search():
 
                 if clicked is not None:
 
-                    st.session_state.selected_movie_id = str(
-                        movie_id
-                    )
-
-                    st.session_state.page = "search"
-
-                    st.rerun()
+                    open_movie(movie_id)
 
 
             elif poster:
