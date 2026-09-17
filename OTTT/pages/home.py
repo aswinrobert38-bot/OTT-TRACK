@@ -1,4 +1,3 @@
-
 import streamlit as st
 
 from components.movie_card import movie_card
