@@ -11,6 +11,18 @@ from services.tmdb_service import (
 )
 
 
+def open_movie(movie_id):
+
+    if not movie_id:
+        return
+
+    st.session_state.selected_movie_id = str(movie_id)
+
+    st.session_state.page = "home"
+
+    st.rerun()
+
+
 def show_movies(movies, section_name):
 
     st.markdown(
@@ -21,11 +33,13 @@ def show_movies(movies, section_name):
     )
 
     if not movies:
+
         st.info("No movies available.")
+
         return
 
 
-    columns = st.columns(6, gap="medium")
+    columns = st.columns(6)
 
 
     for index, movie in enumerate(movies[:12]):
@@ -52,8 +66,8 @@ def show_movies(movies, section_name):
             if poster and movie_id:
 
                 click_key = (
-                    "poster_"
-                    + str(st.session_state.poster_view_version)
+                    "home_poster_"
+                    + str(st.session_state.poster_version)
                     + "_"
                     + str(section_name).replace(" ", "_")
                     + "_"
@@ -71,13 +85,7 @@ def show_movies(movies, section_name):
 
                 if clicked is not None:
 
-                    st.session_state.selected_movie_id = str(
-                        movie_id
-                    )
-
-                    st.session_state.page = "home"
-
-                    st.rerun()
+                    open_movie(movie_id)
 
 
             elif poster:
@@ -101,7 +109,7 @@ def show_movies(movies, section_name):
 
 
             # =================================================
-            # MOVIE TITLE
+            # TITLE
             # =================================================
 
             st.markdown(
@@ -113,7 +121,7 @@ def show_movies(movies, section_name):
 
 
             # =================================================
-            # MOVIE METADATA
+            # METADATA
             # =================================================
 
             metadata = []
@@ -144,15 +152,11 @@ def show_movies(movies, section_name):
             )
 
 
-# =========================================================
-# HOME PAGE
-# =========================================================
-
 def render_home():
 
-    # =====================================================
+    # =========================================================
     # HERO
-    # =====================================================
+    # =========================================================
 
     st.markdown(
         """
@@ -174,9 +178,9 @@ def render_home():
 
     try:
 
-        # =================================================
+        # =====================================================
         # TRENDING
-        # =================================================
+        # =====================================================
 
         trending = get_trending()
 
@@ -186,9 +190,9 @@ def render_home():
         )
 
 
-        # =================================================
+        # =====================================================
         # NOW PLAYING
-        # =================================================
+        # =====================================================
 
         now_playing = get_now_playing()
 
@@ -198,9 +202,9 @@ def render_home():
         )
 
 
-        # =================================================
+        # =====================================================
         # POPULAR
-        # =================================================
+        # =====================================================
 
         popular = get_popular()
 
