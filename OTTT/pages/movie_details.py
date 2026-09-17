@@ -172,6 +172,7 @@ def render_movie_details(movie_id):
     ):
 
         st.session_state.open_movie_id = None
+
         st.rerun()
 
 
