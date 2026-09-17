@@ -25,9 +25,9 @@ st.markdown(
     """
     <style>
 
-    /* ==============================
+    /* =====================================================
        MAIN BACKGROUND
-       ============================== */
+       ===================================================== */
 
     .stApp {
         background:
@@ -52,18 +52,18 @@ st.markdown(
     }
 
 
-    /* ==============================
+    /* =====================================================
        REMOVE STREAMLIT AUTO NAVIGATION
-       ============================== */
+       ===================================================== */
 
     [data-testid="stSidebarNav"] {
         display: none;
     }
 
 
-    /* ==============================
+    /* =====================================================
        SIDEBAR
-       ============================== */
+       ===================================================== */
 
     section[data-testid="stSidebar"] {
         background:
@@ -82,21 +82,22 @@ st.markdown(
     }
 
 
-    /* ==============================
-       LOGO
-       ============================== */
+    /* =====================================================
+       BRAND
+       ===================================================== */
 
     .brand {
         font-size: 28px;
         font-weight: 900;
         letter-spacing: -1px;
 
-        background: linear-gradient(
-            90deg,
-            #8b5cf6,
-            #ec4899,
-            #f97316
-        );
+        background:
+            linear-gradient(
+                90deg,
+                #8b5cf6,
+                #ec4899,
+                #f97316
+            );
 
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -112,9 +113,9 @@ st.markdown(
     }
 
 
-    /* ==============================
+    /* =====================================================
        SIDEBAR BUTTONS
-       ============================== */
+       ===================================================== */
 
     section[data-testid="stSidebar"] .stButton button {
         background: transparent;
@@ -149,9 +150,58 @@ st.markdown(
     }
 
 
-    /* ==============================
+    /* =====================================================
+       GLOBAL SEARCH
+       ===================================================== */
+
+    .search-heading {
+        font-size: 13px;
+
+        font-weight: 800;
+
+        letter-spacing: 1.5px;
+
+        color: #8f93a3;
+
+        margin-bottom: 8px;
+
+        margin-top: 5px;
+    }
+
+
+    .global-search {
+        margin-bottom: 28px;
+    }
+
+
+    .global-search input {
+        height: 48px !important;
+
+        font-size: 16px !important;
+
+        padding-left: 18px !important;
+
+        background: #11131b !important;
+
+        border: 1px solid #292c38 !important;
+
+        border-radius: 12px !important;
+
+        color: white !important;
+    }
+
+
+    .global-search input:focus {
+        border-color: #8b5cf6 !important;
+
+        box-shadow:
+            0 0 0 1px #8b5cf6 !important;
+    }
+
+
+    /* =====================================================
        HERO
-       ============================== */
+       ===================================================== */
 
     .hero {
         position: relative;
@@ -185,9 +235,11 @@ st.markdown(
         position: absolute;
 
         width: 280px;
+
         height: 280px;
 
         right: -80px;
+
         top: -100px;
 
         background: #8b5cf6;
@@ -209,14 +261,16 @@ st.markdown(
 
         letter-spacing: -2px;
 
-        background: linear-gradient(
-            90deg,
-            #ffffff,
-            #d8b4fe,
-            #f9a8d4
-        );
+        background:
+            linear-gradient(
+                90deg,
+                #ffffff,
+                #d8b4fe,
+                #f9a8d4
+            );
 
         -webkit-background-clip: text;
+
         -webkit-text-fill-color: transparent;
     }
 
@@ -232,9 +286,9 @@ st.markdown(
     }
 
 
-    /* ==============================
+    /* =====================================================
        SECTION TITLE
-       ============================== */
+       ===================================================== */
 
     .section-title {
         font-size: 25px;
@@ -249,9 +303,9 @@ st.markdown(
     }
 
 
-    /* ==============================
+    /* =====================================================
        MOVIE TITLE
-       ============================== */
+       ===================================================== */
 
     .movie-title {
         font-size: 16px;
@@ -281,9 +335,9 @@ st.markdown(
     }
 
 
-    /* ==============================
-       IMAGE
-       ============================== */
+    /* =====================================================
+       POSTER
+       ===================================================== */
 
     [data-testid="stImage"] img {
         border-radius: 12px;
@@ -304,9 +358,56 @@ st.markdown(
     }
 
 
-    /* ==============================
+    /* =====================================================
+       CLICKABLE POSTER COMPONENT
+       ===================================================== */
+
+    iframe {
+        border-radius: 12px;
+    }
+
+
+    /* =====================================================
+       NORMAL BUTTONS
+       ===================================================== */
+
+    .stButton button {
+        border-radius: 9px;
+
+        border: 1px solid rgba(139,92,246,0.30);
+
+        background:
+            linear-gradient(
+                135deg,
+                rgba(139,92,246,0.18),
+                rgba(236,72,153,0.12)
+            );
+
+        color: #eeeeff;
+
+        font-weight: 600;
+
+        transition: all 0.2s ease;
+    }
+
+
+    .stButton button:hover {
+        border-color: #8b5cf6;
+
+        background:
+            linear-gradient(
+                135deg,
+                rgba(139,92,246,0.35),
+                rgba(236,72,153,0.25)
+            );
+
+        color: white;
+    }
+
+
+    /* =====================================================
        INPUTS
-       ============================== */
+       ===================================================== */
 
     .stTextInput input,
     .stSelectbox div[data-baseweb="select"],
@@ -329,9 +430,9 @@ st.markdown(
     }
 
 
-    /* ==============================
+    /* =====================================================
        METRICS
-       ============================== */
+       ===================================================== */
 
     [data-testid="stMetric"] {
         background:
@@ -349,18 +450,18 @@ st.markdown(
     }
 
 
-    /* ==============================
+    /* =====================================================
        DIVIDER
-       ============================== */
+       ===================================================== */
 
     hr {
         border-color: rgba(255,255,255,0.08);
     }
 
 
-    /* ==============================
+    /* =====================================================
        FALLBACK POSTER
-       ============================== */
+       ===================================================== */
 
     .poster-fallback {
         height: 280px;
@@ -390,24 +491,9 @@ st.markdown(
     }
 
 
-    /* ==============================
-       SEARCH BAR
-       ============================== */
-
-    .global-search-title {
-        font-size: 13px;
-
-        color: #8f93a3;
-
-        margin-bottom: 6px;
-
-        font-weight: 600;
-    }
-
-
-    /* ==============================
+    /* =====================================================
        SCROLLBAR
-       ============================== */
+       ===================================================== */
 
     ::-webkit-scrollbar {
         width: 7px;
@@ -443,26 +529,61 @@ st.markdown(
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
+
 if "selected_movie_id" not in st.session_state:
     st.session_state.selected_movie_id = None
+
 
 if "global_search" not in st.session_state:
     st.session_state.global_search = ""
 
-if "poster_view_version" not in st.session_state:
-    st.session_state.poster_view_version = 0
+
+if "poster_version" not in st.session_state:
+    st.session_state.poster_version = 0
 
 
 # =========================================================
-# SEARCH CALLBACK
+# SEARCH HANDLER
 # =========================================================
 
-def handle_global_search():
+def handle_search():
+
     query = st.session_state.global_search.strip()
+
+    st.session_state.selected_movie_id = None
 
     if query:
         st.session_state.page = "search"
-        st.session_state.selected_movie_id = None
+    else:
+        st.session_state.page = "home"
+
+
+# =========================================================
+# GLOBAL SEARCH
+# =========================================================
+
+st.markdown(
+    '<div class="search-heading">SEARCH MOVIES</div>',
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    '<div class="global-search">',
+    unsafe_allow_html=True
+)
+
+st.text_input(
+    "Search",
+    placeholder="Search any movie...",
+    key="global_search",
+    on_change=handle_search,
+    label_visibility="collapsed"
+)
+
+st.markdown(
+    '</div>',
+    unsafe_allow_html=True
+)
 
 
 # =========================================================
@@ -484,40 +605,30 @@ with st.sidebar:
     )
 
 
-    # -------------------------
-    # HOME
-    # -------------------------
-
     if st.button(
         "⌂  Home",
-        use_container_width=True,
-        key="sidebar_home"
+        use_container_width=True
     ):
 
         st.session_state.page = "home"
 
         st.session_state.selected_movie_id = None
 
-        st.session_state.poster_view_version += 1
+        st.session_state.poster_version += 1
 
         st.rerun()
 
 
-    # -------------------------
-    # UPCOMING
-    # -------------------------
-
     if st.button(
         "◷  Upcoming",
-        use_container_width=True,
-        key="sidebar_upcoming"
+        use_container_width=True
     ):
 
         st.session_state.page = "upcoming"
 
         st.session_state.selected_movie_id = None
 
-        st.session_state.poster_view_version += 1
+        st.session_state.poster_version += 1
 
         st.rerun()
 
@@ -525,25 +636,8 @@ with st.sidebar:
     st.divider()
 
     st.caption("ReelRoute")
+
     st.caption("Discover • Explore • Watch")
-
-
-# =========================================================
-# GLOBAL SEARCH
-# =========================================================
-
-st.markdown(
-    '<div class="global-search-title">SEARCH MOVIES</div>',
-    unsafe_allow_html=True
-)
-
-st.text_input(
-    "",
-    placeholder="Search any movie...",
-    key="global_search",
-    on_change=handle_global_search,
-    label_visibility="collapsed"
-)
 
 
 # =========================================================
@@ -556,13 +650,16 @@ if st.session_state.selected_movie_id is not None:
         st.session_state.selected_movie_id
     )
 
+
 elif st.session_state.page == "search":
 
     render_search()
 
+
 elif st.session_state.page == "upcoming":
 
     render_upcoming()
+
 
 else:
 
