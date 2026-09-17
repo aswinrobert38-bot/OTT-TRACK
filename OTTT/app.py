@@ -25,9 +25,9 @@ st.markdown(
     """
     <style>
 
-    /* =====================================================
+    /* ==============================
        MAIN BACKGROUND
-       ===================================================== */
+       ============================== */
 
     .stApp {
         background:
@@ -52,52 +52,39 @@ st.markdown(
     }
 
 
-    /* =====================================================
+    /* ==============================
        REMOVE STREAMLIT AUTO NAVIGATION
-       ===================================================== */
+       ============================== */
 
     [data-testid="stSidebarNav"] {
         display: none;
     }
 
 
-    /* =====================================================
-       SIDEBAR
-       ===================================================== */
+    /* ==============================
+       HIDE SIDEBAR
+       ============================== */
 
     section[data-testid="stSidebar"] {
-        background:
-            linear-gradient(
-                180deg,
-                #11121a 0%,
-                #0a0b10 100%
-            );
-
-        border-right: 1px solid rgba(255,255,255,0.08);
+        display: none;
     }
 
 
-    section[data-testid="stSidebar"] > div {
-        padding-top: 1.5rem;
-    }
-
-
-    /* =====================================================
-       BRAND
-       ===================================================== */
+    /* ==============================
+       OTTTRACK LOGO
+       ============================== */
 
     .brand {
         font-size: 28px;
         font-weight: 900;
         letter-spacing: -1px;
 
-        background:
-            linear-gradient(
-                90deg,
-                #8b5cf6,
-                #ec4899,
-                #f97316
-            );
+        background: linear-gradient(
+            90deg,
+            #8b5cf6,
+            #ec4899,
+            #f97316
+        );
 
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -113,11 +100,12 @@ st.markdown(
     }
 
 
-    /* =====================================================
+    /* ==============================
        SIDEBAR BUTTONS
-       ===================================================== */
+       ============================== */
 
     section[data-testid="stSidebar"] .stButton button {
+
         background: transparent;
 
         border: 1px solid transparent;
@@ -135,6 +123,7 @@ st.markdown(
 
 
     section[data-testid="stSidebar"] .stButton button:hover {
+
         background:
             linear-gradient(
                 90deg,
@@ -150,60 +139,12 @@ st.markdown(
     }
 
 
-    /* =====================================================
-       GLOBAL SEARCH
-       ===================================================== */
-
-    .search-heading {
-        font-size: 13px;
-
-        font-weight: 800;
-
-        letter-spacing: 1.5px;
-
-        color: #8f93a3;
-
-        margin-bottom: 8px;
-
-        margin-top: 5px;
-    }
-
-
-    .global-search {
-        margin-bottom: 28px;
-    }
-
-
-    .global-search input {
-        height: 48px !important;
-
-        font-size: 16px !important;
-
-        padding-left: 18px !important;
-
-        background: #11131b !important;
-
-        border: 1px solid #292c38 !important;
-
-        border-radius: 12px !important;
-
-        color: white !important;
-    }
-
-
-    .global-search input:focus {
-        border-color: #8b5cf6 !important;
-
-        box-shadow:
-            0 0 0 1px #8b5cf6 !important;
-    }
-
-
-    /* =====================================================
+    /* ==============================
        HERO
-       ===================================================== */
+       ============================== */
 
     .hero {
+
         position: relative;
 
         padding: 55px 50px;
@@ -230,16 +171,15 @@ st.markdown(
 
 
     .hero::before {
+
         content: "";
 
         position: absolute;
 
         width: 280px;
-
         height: 280px;
 
         right: -80px;
-
         top: -100px;
 
         background: #8b5cf6;
@@ -253,6 +193,7 @@ st.markdown(
 
 
     .hero-title {
+
         position: relative;
 
         font-size: 52px;
@@ -261,13 +202,12 @@ st.markdown(
 
         letter-spacing: -2px;
 
-        background:
-            linear-gradient(
-                90deg,
-                #ffffff,
-                #d8b4fe,
-                #f9a8d4
-            );
+        background: linear-gradient(
+            90deg,
+            #ffffff,
+            #d8b4fe,
+            #f9a8d4
+        );
 
         -webkit-background-clip: text;
 
@@ -276,6 +216,7 @@ st.markdown(
 
 
     .hero-text {
+
         position: relative;
 
         color: #b5b8c5;
@@ -286,11 +227,12 @@ st.markdown(
     }
 
 
-    /* =====================================================
+    /* ==============================
        SECTION TITLE
-       ===================================================== */
+       ============================== */
 
     .section-title {
+
         font-size: 25px;
 
         font-weight: 800;
@@ -303,11 +245,12 @@ st.markdown(
     }
 
 
-    /* =====================================================
+    /* ==============================
        MOVIE TITLE
-       ===================================================== */
+       ============================== */
 
     .movie-title {
+
         font-size: 16px;
 
         font-weight: 700;
@@ -325,6 +268,7 @@ st.markdown(
 
 
     .movie-meta {
+
         font-size: 13px;
 
         color: #8f93a3;
@@ -335,11 +279,12 @@ st.markdown(
     }
 
 
-    /* =====================================================
-       POSTER
-       ===================================================== */
+    /* ==============================
+       MOVIE POSTER
+       ============================== */
 
     [data-testid="stImage"] img {
+
         border-radius: 12px;
 
         transition:
@@ -351,6 +296,7 @@ st.markdown(
 
 
     [data-testid="stImage"] img:hover {
+
         transform: scale(1.025);
 
         box-shadow:
@@ -358,20 +304,12 @@ st.markdown(
     }
 
 
-    /* =====================================================
-       CLICKABLE POSTER COMPONENT
-       ===================================================== */
-
-    iframe {
-        border-radius: 12px;
-    }
-
-
-    /* =====================================================
-       NORMAL BUTTONS
-       ===================================================== */
+    /* ==============================
+       VIEW DETAILS BUTTON
+       ============================== */
 
     .stButton button {
+
         border-radius: 9px;
 
         border: 1px solid rgba(139,92,246,0.30);
@@ -392,6 +330,7 @@ st.markdown(
 
 
     .stButton button:hover {
+
         border-color: #8b5cf6;
 
         background:
@@ -402,16 +341,19 @@ st.markdown(
             );
 
         color: white;
+
+        transform: translateY(-1px);
     }
 
 
-    /* =====================================================
+    /* ==============================
        INPUTS
-       ===================================================== */
+       ============================== */
 
     .stTextInput input,
     .stSelectbox div[data-baseweb="select"],
     .stNumberInput input {
+
         background: #11131b !important;
 
         border: 1px solid #292c38 !important;
@@ -423,6 +365,7 @@ st.markdown(
 
 
     .stTextInput input:focus {
+
         border-color: #8b5cf6 !important;
 
         box-shadow:
@@ -430,11 +373,12 @@ st.markdown(
     }
 
 
-    /* =====================================================
+    /* ==============================
        METRICS
-       ===================================================== */
+       ============================== */
 
     [data-testid="stMetric"] {
+
         background:
             linear-gradient(
                 135deg,
@@ -450,20 +394,22 @@ st.markdown(
     }
 
 
-    /* =====================================================
+    /* ==============================
        DIVIDER
-       ===================================================== */
+       ============================== */
 
     hr {
+
         border-color: rgba(255,255,255,0.08);
     }
 
 
-    /* =====================================================
+    /* ==============================
        FALLBACK POSTER
-       ===================================================== */
+       ============================== */
 
     .poster-fallback {
+
         height: 280px;
 
         border-radius: 12px;
@@ -491,21 +437,24 @@ st.markdown(
     }
 
 
-    /* =====================================================
+    /* ==============================
        SCROLLBAR
-       ===================================================== */
+       ============================== */
 
     ::-webkit-scrollbar {
+
         width: 7px;
     }
 
 
     ::-webkit-scrollbar-track {
+
         background: #08090d;
     }
 
 
     ::-webkit-scrollbar-thumb {
+
         background: #292c38;
 
         border-radius: 10px;
@@ -513,8 +462,10 @@ st.markdown(
 
 
     ::-webkit-scrollbar-thumb:hover {
+
         background: #8b5cf6;
     }
+
 
     </style>
     """,
@@ -529,115 +480,8 @@ st.markdown(
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
-
 if "selected_movie_id" not in st.session_state:
     st.session_state.selected_movie_id = None
-
-
-if "global_search" not in st.session_state:
-    st.session_state.global_search = ""
-
-
-if "poster_version" not in st.session_state:
-    st.session_state.poster_version = 0
-
-
-# =========================================================
-# SEARCH HANDLER
-# =========================================================
-
-def handle_search():
-
-    query = st.session_state.global_search.strip()
-
-    st.session_state.selected_movie_id = None
-
-    if query:
-        st.session_state.page = "search"
-    else:
-        st.session_state.page = "home"
-
-
-# =========================================================
-# GLOBAL SEARCH
-# =========================================================
-
-st.markdown(
-    '<div class="search-heading">SEARCH MOVIES</div>',
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    '<div class="global-search">',
-    unsafe_allow_html=True
-)
-
-st.text_input(
-    "Search",
-    placeholder="Search any movie...",
-    key="global_search",
-    on_change=handle_search,
-    label_visibility="collapsed"
-)
-
-st.markdown(
-    '</div>',
-    unsafe_allow_html=True
-)
-
-
-# =========================================================
-# CUSTOM SIDEBAR
-# =========================================================
-
-with st.sidebar:
-
-    st.markdown(
-        '<div class="brand">ReelRoute</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        '<div class="brand-tagline">'
-        'Every Movie. Every Platform. One Place.'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-
-    if st.button(
-        "⌂  Home",
-        use_container_width=True
-    ):
-
-        st.session_state.page = "home"
-
-        st.session_state.selected_movie_id = None
-
-        st.session_state.poster_version += 1
-
-        st.rerun()
-
-
-    if st.button(
-        "◷  Upcoming",
-        use_container_width=True
-    ):
-
-        st.session_state.page = "upcoming"
-
-        st.session_state.selected_movie_id = None
-
-        st.session_state.poster_version += 1
-
-        st.rerun()
-
-
-    st.divider()
-
-    st.caption("ReelRoute")
-
-    st.caption("Discover • Explore • Watch")
 
 
 # =========================================================
@@ -650,16 +494,13 @@ if st.session_state.selected_movie_id is not None:
         st.session_state.selected_movie_id
     )
 
-
 elif st.session_state.page == "search":
 
     render_search()
 
-
 elif st.session_state.page == "upcoming":
 
     render_upcoming()
-
 
 else:
 
