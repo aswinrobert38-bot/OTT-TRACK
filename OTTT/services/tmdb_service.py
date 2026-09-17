@@ -1,8 +1,13 @@
-\import os
+import os
 import requests
+import streamlit as st
 
 
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
+
+IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
+
+BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w1280"
 
 
 class TMDBError(Exception):
@@ -10,32 +15,47 @@ class TMDBError(Exception):
 
 
 def get_token():
-    token = os.getenv("TMDB_TOKEN")
+
+    token = None
+
+    try:
+        token = st.secrets.get("TMDB_TOKEN")
+    except Exception:
+        pass
 
     if not token:
-        raise TMDBError("TMDB_TOKEN is missing")
+        token = os.getenv("TMDB_TOKEN")
 
-    return token.strip()
+    if not token:
+        raise TMDBError(
+            "TMDB_TOKEN is missing. Add TMDB_TOKEN to .env or Streamlit Cloud Secrets."
+        )
+
+    return str(token).strip()
 
 
 def get_headers():
+
     return {
         "Authorization": "Bearer " + get_token(),
-        "Content-Type": "application/json"
+        "Content-Type": "application/json;charset=utf-8"
     }
 
 
 def _request(endpoint, params=None):
 
+    url = TMDB_BASE_URL + endpoint
+
     try:
         response = requests.get(
-            TMDB_BASE_URL + endpoint,
+            url,
             headers=get_headers(),
             params=params,
             timeout=20
         )
 
     except requests.RequestException as error:
+
         raise TMDBError(
             "Unable to connect to TMDB: " + str(error)
         )
@@ -43,74 +63,66 @@ def _request(endpoint, params=None):
     if response.status_code != 200:
 
         try:
-            data = response.json()
-            message = data.get(
+            message = response.json().get(
                 "status_message",
                 "TMDB request failed"
             )
         except Exception:
             message = "TMDB request failed"
 
-        raise TMDBError(message)
+        raise TMDBError(str(message))
 
     return response.json()
 
 
 def normalize_movie(movie):
 
-    poster_path = movie.get("poster_path")
+    movie["poster_url"] = None
+    movie["backdrop_url"] = None
 
-    if poster_path:
-        poster_url = (
-            "https://image.tmdb.org/t/p/w500/"
-            + poster_path
+    if movie.get("poster_path"):
+        movie["poster_url"] = (
+            IMAGE_BASE_URL +
+            movie["poster_path"]
         )
-    else:
-        poster_url = None
 
-    return {
-        "id": movie.get("id"),
-        "title": (
-            movie.get("title")
-            or movie.get("name")
-            or "Unknown"
-        ),
-        "overview": movie.get("overview", ""),
-        "poster_path": poster_path,
-        "poster_url": poster_url,
-        "backdrop_path": movie.get("backdrop_path"),
-        "release_date": movie.get("release_date", ""),
-        "vote_average": movie.get("vote_average", 0),
-        "vote_count": movie.get("vote_count", 0),
-        "popularity": movie.get("popularity", 0),
-        "original_language": movie.get(
-            "original_language",
-            ""
-        ),
-        "genre_ids": movie.get(
-            "genre_ids",
-            []
+    if movie.get("backdrop_path"):
+        movie["backdrop_url"] = (
+            BACKDROP_BASE_URL +
+            movie["backdrop_path"]
         )
+
+    movie["rating"] = movie.get(
+        "vote_average",
+        0
+    )
+
+    return movie
+
+
+def search_movies(
+    query,
+    page=1,
+    year=None,
+    language=None
+):
+
+    params = {
+        "query": query.strip(),
+        "page": page,
+        "include_adult": False,
+        "region": "IN"
     }
 
+    if year:
+        params["year"] = year
 
-def search_movies(query, page=1):
-
-    if not query:
-        return {
-            "page": 1,
-            "results": [],
-            "total_pages": 0,
-            "total_results": 0
-        }
+    if language:
+        params["with_original_language"] = language
 
     data = _request(
         "/search/movie",
-        {
-            "query": query,
-            "page": page,
-            "include_adult": False
-        }
+        params
     )
 
     data["results"] = [
@@ -126,6 +138,7 @@ def get_now_playing(page=1):
     data = _request(
         "/movie/now_playing",
         {
+            "region": "IN",
             "page": page
         }
     )
@@ -143,6 +156,7 @@ def get_popular(page=1):
     data = _request(
         "/movie/popular",
         {
+            "region": "IN",
             "page": page
         }
     )
@@ -155,16 +169,10 @@ def get_popular(page=1):
     return data
 
 
-def get_trending(
-    media_type="movie",
-    time_window="week"
-):
+def get_trending():
 
     data = _request(
-        "/trending/"
-        + media_type
-        + "/"
-        + time_window
+        "/trending/movie/week"
     )
 
     data["results"] = [
@@ -180,6 +188,7 @@ def get_upcoming(page=1):
     data = _request(
         "/movie/upcoming",
         {
+            "region": "IN",
             "page": page
         }
     )
@@ -194,10 +203,20 @@ def get_upcoming(page=1):
 
 def get_movie_details(movie_id):
 
-    return _request(
+    data = _request(
         "/movie/" + str(movie_id),
         {
-            "append_to_response":
-                "credits,videos,watch/providers"
+            "append_to_response": "credits,videos"
         }
+    )
+
+    return normalize_movie(data)
+
+
+def get_watch_providers(movie_id):
+
+    return _request(
+        "/movie/" +
+        str(movie_id) +
+        "/watch/providers"
     )
