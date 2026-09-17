@@ -103,15 +103,18 @@ def movie_card(movie):
             quote=True
         )
 
-        poster_markdown = (
-            f'[![{safe_title}]'
-            f'({poster})]'
-            f'(?movie_id={movie_id})'
+        st.image(
+            poster,
+            use_container_width=True
         )
 
-        st.markdown(
-            poster_markdown
-        )
+        if st.button(
+            "View movie details",
+            key=f"search_movie_{movie_id}",
+            use_container_width=True
+        ):
+            st.session_state.open_movie_id = movie_id
+            st.rerun()
 
     elif poster:
 
@@ -171,24 +174,6 @@ def movie_card(movie):
 
 
 def render_search():
-
-    # =========================================
-    # CHECK MOVIE CLICK
-    # =========================================
-
-    movie_id = st.query_params.get(
-        "movie_id"
-    )
-
-    if movie_id:
-
-        st.session_state.selected_movie_id = str(
-            movie_id
-        )
-
-        st.query_params.clear()
-
-        st.rerun()
 
     # =========================================
     # HEADER
