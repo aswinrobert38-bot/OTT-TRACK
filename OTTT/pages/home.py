@@ -1,5 +1,6 @@
 import html
 import streamlit as st
+
 from streamlit_image_coordinates import streamlit_image_coordinates
 
 from services.tmdb_service import (
@@ -10,7 +11,7 @@ from services.tmdb_service import (
 )
 
 
-def show_movies(movies, section_name):
+def show_movies(movies, section_name, section_key):
 
     st.markdown(
         '<div class="section-title">' +
@@ -37,21 +38,20 @@ def show_movies(movies, section_name):
             poster = movie.get("poster_url")
             movie_id = movie.get("id")
 
-            # =====================================================
-            # CLICKABLE POSTER
-            # =====================================================
+            # -------------------------
+            # Clickable Poster
+            # -------------------------
 
             if poster and movie_id:
 
                 clicked = streamlit_image_coordinates(
                     poster,
-                    width=220,
-                    key="home_poster_" + str(movie_id)
+                    width=180,
+                    key=f"poster_{section_key}_{index}"
                 )
 
-                if clicked:
-                    st.session_state.selected_movie_id = str(movie_id)
-                    st.session_state.page = "home"
+                if clicked is not None:
+                    st.session_state.selected_movie_id = movie_id
                     st.rerun()
 
             elif poster:
@@ -72,9 +72,9 @@ def show_movies(movies, section_name):
                     unsafe_allow_html=True
                 )
 
-            # =====================================================
-            # MOVIE TITLE
-            # =====================================================
+            # -------------------------
+            # Movie Title
+            # -------------------------
 
             st.markdown(
                 '<div class="movie-title">' +
@@ -83,9 +83,9 @@ def show_movies(movies, section_name):
                 unsafe_allow_html=True
             )
 
-            # =====================================================
-            # MOVIE METADATA
-            # =====================================================
+            # -------------------------
+            # Movie Metadata
+            # -------------------------
 
             metadata = []
 
@@ -110,9 +110,9 @@ def show_movies(movies, section_name):
 
 def render_home():
 
-    # =========================================================
-    # HERO
-    # =========================================================
+    # -------------------------
+    # Hero
+    # -------------------------
 
     st.markdown(
         """
@@ -131,10 +131,6 @@ def render_home():
         unsafe_allow_html=True
     )
 
-    # =========================================================
-    # MOVIES
-    # =========================================================
-
     try:
 
         # -------------------------
@@ -145,7 +141,8 @@ def render_home():
 
         show_movies(
             trending.get("results", []),
-            "Trending Movies"
+            "Trending Movies",
+            "trending"
         )
 
         # -------------------------
@@ -156,7 +153,8 @@ def render_home():
 
         show_movies(
             now_playing.get("results", []),
-            "Now Playing"
+            "Now Playing",
+            "now_playing"
         )
 
         # -------------------------
@@ -167,7 +165,8 @@ def render_home():
 
         show_movies(
             popular.get("results", []),
-            "Popular Movies"
+            "Popular Movies",
+            "popular"
         )
 
     except TMDBError as error:
