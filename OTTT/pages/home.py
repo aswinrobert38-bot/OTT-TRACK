@@ -34,7 +34,7 @@ def get_movie_list(data):
 
 
 # =========================================================
-# NORMALIZE MOVIE FOR DISPLAY
+# PREPARE MOVIE DATA
 # =========================================================
 
 def prepare_movie(movie):
@@ -56,6 +56,10 @@ def prepare_movie(movie):
         or ""
     )
 
+    # -----------------------------------------
+    # Poster URL
+    # -----------------------------------------
+
     poster = movie.get(
         "poster_url"
     )
@@ -72,6 +76,10 @@ def prepare_movie(movie):
                 "https://image.tmdb.org/t/p/w500"
                 + poster_path
             )
+
+    # -----------------------------------------
+    # Rating
+    # -----------------------------------------
 
     rating = movie.get(
         "rating"
@@ -136,7 +144,10 @@ def show_movies(
 
         return
 
+    # -----------------------------------------------------
     # Five movies per row
+    # -----------------------------------------------------
+
     columns = st.columns(
         5,
         gap="medium"
@@ -148,9 +159,9 @@ def show_movies(
 
         with columns[index % 5]:
 
-            # =================================================
+            # =============================================
             # POSTER
-            # =================================================
+            # =============================================
 
             poster = movie.get(
                 "poster_url"
@@ -165,13 +176,13 @@ def show_movies(
 
             else:
 
-                st.markdown(
-                    "No poster available"
+                st.info(
+                    "No poster"
                 )
 
-            # =================================================
+            # =============================================
             # TITLE
-            # =================================================
+            # =============================================
 
             title = movie.get(
                 "title",
@@ -182,9 +193,9 @@ def show_movies(
                 f"**{title}**"
             )
 
-            # =================================================
+            # =============================================
             # YEAR + RATING
-            # =================================================
+            # =============================================
 
             release_date = movie.get(
                 "release_date",
@@ -226,9 +237,9 @@ def show_movies(
                     rating_text
                 )
 
-            # =================================================
+            # =============================================
             # OPEN MOVIE
-            # =================================================
+            # =============================================
 
             movie_id = movie.get(
                 "id"
@@ -236,13 +247,27 @@ def show_movies(
 
             if movie_id:
 
+                # IMPORTANT:
+                # Section name is included so the same movie
+                # can appear in multiple sections without
+                # creating duplicate Streamlit keys.
+
+                safe_section = (
+                    section_name
+                    .replace(" ", "_")
+                    .replace("/", "_")
+                )
+
+                button_key = (
+                    f"open_movie_"
+                    f"{safe_section}_"
+                    f"{movie_id}_"
+                    f"{index}"
+                )
+
                 if st.button(
                     "Open Movie",
-                    key=(
-                        f"open_movie_"
-                        f"{movie_id}_"
-                        f"{index}"
-                    ),
+                    key=button_key,
                     use_container_width=True
                 ):
 
@@ -259,9 +284,9 @@ def show_movies(
 
 def render_home():
 
-    # =========================================================
+    # =====================================================
     # HERO
-    # =========================================================
+    # =====================================================
 
     st.title(
         "ReelRoute"
@@ -277,9 +302,9 @@ def render_home():
 
     st.divider()
 
-    # =========================================================
+    # =====================================================
     # SEARCH BAR
-    # =========================================================
+    # =====================================================
 
     st.markdown(
         "### Search Movies"
@@ -309,9 +334,9 @@ def render_home():
             key="home_search_button"
         )
 
-    # =========================================================
-    # SEARCH
-    # =========================================================
+    # =====================================================
+    # SEARCH RESULTS
+    # =====================================================
 
     if search_clicked:
 
@@ -339,6 +364,11 @@ def render_home():
                 "### Search Results"
             )
 
+            st.caption(
+                f"{len(results)} result(s) for "
+                f'"{query.strip()}"'
+            )
+
             if not results:
 
                 st.warning(
@@ -349,7 +379,7 @@ def render_home():
 
             show_movies(
                 results,
-                "Movies"
+                "Search Results"
             )
 
             return
@@ -357,6 +387,10 @@ def render_home():
         except TMDBError as error:
 
             st.error(
+                "Search error"
+            )
+
+            st.code(
                 str(error)
             )
 
@@ -374,9 +408,9 @@ def render_home():
 
             return
 
-    # =========================================================
-    # TRENDING
-    # =========================================================
+    # =====================================================
+    # TRENDING MOVIES
+    # =====================================================
 
     try:
 
@@ -394,8 +428,11 @@ def render_home():
     except TMDBError as error:
 
         st.error(
-            "Trending Movies: "
-            + str(error)
+            "Trending Movies error"
+        )
+
+        st.code(
+            str(error)
         )
 
     except Exception as error:
@@ -410,9 +447,9 @@ def render_home():
 
     st.divider()
 
-    # =========================================================
+    # =====================================================
     # NOW PLAYING
-    # =========================================================
+    # =====================================================
 
     try:
 
@@ -430,8 +467,11 @@ def render_home():
     except TMDBError as error:
 
         st.error(
-            "Now Playing: "
-            + str(error)
+            "Now Playing error"
+        )
+
+        st.code(
+            str(error)
         )
 
     except Exception as error:
@@ -446,9 +486,9 @@ def render_home():
 
     st.divider()
 
-    # =========================================================
-    # POPULAR
-    # =========================================================
+    # =====================================================
+    # POPULAR MOVIES
+    # =====================================================
 
     try:
 
@@ -466,8 +506,11 @@ def render_home():
     except TMDBError as error:
 
         st.error(
-            "Popular Movies: "
-            + str(error)
+            "Popular Movies error"
+        )
+
+        st.code(
+            str(error)
         )
 
     except Exception as error:
