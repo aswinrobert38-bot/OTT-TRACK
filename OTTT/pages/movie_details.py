@@ -3,93 +3,216 @@ import streamlit as st
 from services.tmdb_service import (
     TMDBError,
     get_movie_details,
-    get_watch_providers
+    get_watch_providers,
 )
 
 
+# =========================================================
+# HELPERS
+# =========================================================
+
+def safe_text(value, default="Not available"):
+
+    if value is None:
+        return default
+
+    text = str(value).strip()
+
+    if not text:
+        return default
+
+    return text
+
+
+def get_languages(movie):
+
+    spoken_languages = movie.get(
+        "spoken_languages",
+        []
+    )
+
+    languages = []
+
+    for language in spoken_languages:
+
+        name = (
+            language.get("english_name")
+            or language.get("name")
+        )
+
+        if name and name not in languages:
+
+            languages.append(name)
+
+    return languages
+
+
+def get_genres(movie):
+
+    genres = movie.get(
+        "genres",
+        []
+    )
+
+    names = []
+
+    for genre in genres:
+
+        name = genre.get("name")
+
+        if name:
+
+            names.append(name)
+
+    return names
+
+
+def get_directors(movie):
+
+    credits = movie.get(
+        "credits",
+        {}
+    )
+
+    crew = credits.get(
+        "crew",
+        []
+    )
+
+    directors = []
+
+    for person in crew:
+
+        if (
+            person.get("job") == "Director"
+            and person.get("name")
+        ):
+
+            if person["name"] not in directors:
+
+                directors.append(
+                    person["name"]
+                )
+
+    return directors
+
+
+def get_cast(movie):
+
+    credits = movie.get(
+        "credits",
+        {}
+    )
+
+    cast = credits.get(
+        "cast",
+        []
+    )
+
+    names = []
+
+    for person in cast[:12]:
+
+        name = person.get(
+            "name"
+        )
+
+        if name:
+
+            names.append(
+                name
+            )
+
+    return names
+
+
+# =========================================================
+# PROVIDER SECTION
+# =========================================================
+
 def show_provider_section(
+    title,
     providers,
-    section_title,
-    provider_type
+    availability_type
 ):
 
     if not providers:
         return
 
+
     st.markdown(
-        "### " + section_title
+        f"### {title}"
     )
 
-    columns = st.columns(4)
 
-    for index, provider in enumerate(providers):
+    for provider in providers:
 
-        with columns[index % 4]:
+        provider_name = provider.get(
+            "provider_name",
+            "Unknown platform"
+        )
 
-            provider_name = provider.get(
-                "provider_name",
-                "Unknown"
-            )
+        logo_path = provider.get(
+            "logo_path"
+        )
 
-            logo_path = provider.get(
-                "logo_path"
-            )
 
-            # -------------------------
-            # Provider Logo
-            # -------------------------
+        col1, col2 = st.columns(
+            [1, 5]
+        )
+
+
+        with col1:
 
             if logo_path:
 
                 logo_url = (
-                    "https://image.tmdb.org/t/p/w154"
+                    "https://image.tmdb.org/t/p/w92"
                     + logo_path
                 )
 
                 st.image(
                     logo_url,
-                    width=90
+                    width=55
                 )
 
-            else:
 
-                st.markdown(
-                    "### " + provider_name
-                )
-
-            # -------------------------
-            # Provider Name
-            # -------------------------
+        with col2:
 
             st.markdown(
-                "**" + provider_name + "**"
+                f"**{provider_name}**"
             )
-
-            # -------------------------
-            # Provider Type
-            # -------------------------
 
             st.caption(
-                provider_type
+                availability_type
             )
 
-            st.divider()
 
+# =========================================================
+# MOVIE DETAILS
+# =========================================================
 
 def render_movie_details(movie_id):
 
-    # -------------------------
-    # Back Button
-    # -------------------------
+    # =====================================================
+    # BACK
+    # =====================================================
 
     if st.button(
-        "← Back",
+        "← Back to Movies",
         key="back_movie"
     ):
 
         st.session_state.selected_movie_id = None
 
+        st.query_params.clear()
+
         st.rerun()
+
+
+    # =====================================================
+    # GET MOVIE
+    # =====================================================
 
     try:
 
@@ -105,17 +228,20 @@ def render_movie_details(movie_id):
 
         return
 
-    # =========================================================
-    # MOVIE INFORMATION
-    # =========================================================
 
-    title = movie.get(
-        "title"
-    ) or "Untitled"
+    # =====================================================
+    # BASIC DATA
+    # =====================================================
 
-    overview = movie.get(
-        "overview"
-    ) or "No description available."
+    title = safe_text(
+        movie.get("title"),
+        "Untitled"
+    )
+
+    overview = safe_text(
+        movie.get("overview"),
+        "No description available."
+    )
 
     poster = movie.get(
         "poster_url"
@@ -126,36 +252,41 @@ def render_movie_details(movie_id):
     )
 
     rating = movie.get(
-        "rating",
-        0
+        "rating"
     )
 
-    release_date = movie.get(
-        "release_date"
-    ) or "Not available"
-
-    original_language = movie.get(
-        "original_language"
-    ) or "Not available"
-
-    genres = movie.get(
-        "genres",
-        []
+    release_date = safe_text(
+        movie.get("release_date")
     )
 
-    genre_names = [
-        genre.get("name")
-        for genre in genres
-        if genre.get("name")
-    ]
-
-    genre_text = ", ".join(
-        genre_names
+    original_language = safe_text(
+        movie.get("original_language")
     )
 
-    # =========================================================
+    runtime = movie.get(
+        "runtime"
+    )
+
+    genres = get_genres(
+        movie
+    )
+
+    languages = get_languages(
+        movie
+    )
+
+    directors = get_directors(
+        movie
+    )
+
+    cast = get_cast(
+        movie
+    )
+
+
+    # =====================================================
     # BACKDROP
-    # =========================================================
+    # =====================================================
 
     if backdrop:
 
@@ -164,39 +295,49 @@ def render_movie_details(movie_id):
             use_container_width=True
         )
 
-    # =========================================================
+
+    # =====================================================
     # TITLE
-    # =========================================================
+    # =====================================================
 
     st.title(
         title
     )
 
-    # =========================================================
-    # BASIC INFORMATION
-    # =========================================================
 
-    col1, col2, col3, col4 = st.columns(4)
+    # =====================================================
+    # BASIC METRICS
+    # =====================================================
+
+    col1, col2, col3, col4 = st.columns(
+        4
+    )
+
 
     with col1:
 
         try:
 
-            rating_value = str(
-                round(
-                    float(rating),
-                    1
+            rating_text = (
+                "★ "
+                + str(
+                    round(
+                        float(rating),
+                        1
+                    )
                 )
             )
 
         except Exception:
 
-            rating_value = "N/A"
+            rating_text = "N/A"
+
 
         st.metric(
             "Rating",
-            "★ " + rating_value
+            rating_text
         )
+
 
     with col2:
 
@@ -205,6 +346,7 @@ def render_movie_details(movie_id):
             release_date
         )
 
+
     with col3:
 
         st.metric(
@@ -212,44 +354,35 @@ def render_movie_details(movie_id):
             original_language.upper()
         )
 
+
     with col4:
 
-        runtime = movie.get(
-            "runtime"
+        runtime_text = (
+            str(runtime) + " min"
+            if runtime
+            else "N/A"
         )
-
-        if runtime:
-
-            runtime_text = (
-                str(runtime)
-                + " min"
-            )
-
-        else:
-
-            runtime_text = "N/A"
 
         st.metric(
             "Runtime",
             runtime_text
         )
 
+
     st.divider()
 
-    # =========================================================
-    # MAIN CONTENT
-    # =========================================================
 
-    left, right = st.columns(
+    # =====================================================
+    # POSTER + INFORMATION
+    # =====================================================
+
+    poster_col, information_col = st.columns(
         [1, 2],
         gap="large"
     )
 
-    # -------------------------
-    # Poster
-    # -------------------------
 
-    with left:
+    with poster_col:
 
         if poster:
 
@@ -261,14 +394,11 @@ def render_movie_details(movie_id):
         else:
 
             st.info(
-                "No poster available."
+                "Poster unavailable."
             )
 
-    # -------------------------
-    # About Movie
-    # -------------------------
 
-    with right:
+    with information_col:
 
         st.subheader(
             "About the Movie"
@@ -278,12 +408,14 @@ def render_movie_details(movie_id):
             overview
         )
 
-        if genre_text:
+
+        if genres:
 
             st.markdown(
-                "**Genre:** "
-                + genre_text
+                "**Genres:** "
+                + ", ".join(genres)
             )
+
 
         tagline = movie.get(
             "tagline"
@@ -293,40 +425,66 @@ def render_movie_details(movie_id):
 
             st.markdown(
                 "**Tagline:** "
-                + tagline
+                + str(tagline)
             )
 
-    # =========================================================
-    # CAST & CREW
-    # =========================================================
+
+    # =====================================================
+    # LANGUAGE INFORMATION
+    # =====================================================
 
     st.divider()
 
-    credits = movie.get(
-        "credits",
-        {}
+    st.subheader(
+        "Language Information"
     )
 
-    cast = credits.get(
-        "cast",
-        []
+
+    language_col1, language_col2 = st.columns(
+        2
     )
 
-    crew = credits.get(
-        "crew",
-        []
-    )
 
-    directors = [
-        person.get("name")
-        for person in crew
-        if person.get("job") == "Director"
-        and person.get("name")
-    ]
+    with language_col1:
+
+        st.markdown(
+            "**Original Language**"
+        )
+
+        st.write(
+            original_language.upper()
+        )
+
+
+    with language_col2:
+
+        st.markdown(
+            "**Spoken Languages**"
+        )
+
+        if languages:
+
+            st.write(
+                " • ".join(languages)
+            )
+
+        else:
+
+            st.write(
+                "Not available"
+            )
+
+
+    # =====================================================
+    # CAST & CREW
+    # =====================================================
+
+    st.divider()
 
     st.subheader(
         "Cast & Crew"
     )
+
 
     if directors:
 
@@ -335,22 +493,18 @@ def render_movie_details(movie_id):
             + ", ".join(directors)
         )
 
-    if cast:
 
-        cast_names = [
-            person.get("name")
-            for person in cast[:10]
-            if person.get("name")
-        ]
+    if cast:
 
         st.markdown(
             "**Cast:** "
-            + ", ".join(cast_names)
+            + ", ".join(cast)
         )
 
-    # =========================================================
+
+    # =====================================================
     # TRAILER
-    # =========================================================
+    # =====================================================
 
     videos = movie.get(
         "videos",
@@ -364,6 +518,7 @@ def render_movie_details(movie_id):
 
     trailer = None
 
+
     for video in video_results:
 
         if (
@@ -374,6 +529,7 @@ def render_movie_details(movie_id):
             trailer = video
 
             break
+
 
     if trailer and trailer.get("key"):
 
@@ -392,15 +548,21 @@ def render_movie_details(movie_id):
             youtube_url
         )
 
-    # =========================================================
+
+    # =====================================================
     # OTT AVAILABILITY
-    # =========================================================
+    # =====================================================
 
     st.divider()
 
-    st.subheader(
+    st.header(
         "Where to Watch in India"
     )
+
+    st.caption(
+        "Current India-region availability returned by TMDB."
+    )
+
 
     try:
 
@@ -418,7 +580,8 @@ def render_movie_details(movie_id):
             {}
         )
 
-        flatrate = india.get(
+
+        streaming = india.get(
             "flatrate",
             []
         )
@@ -433,54 +596,72 @@ def render_movie_details(movie_id):
             []
         )
 
-        # -------------------------
-        # Streaming
-        # -------------------------
 
-        show_provider_section(
-            flatrate,
-            "STREAM",
-            "Streaming"
-        )
+        # -------------------------------------------------
+        # STREAMING
+        # -------------------------------------------------
 
-        # -------------------------
-        # Rent
-        # -------------------------
+        if streaming:
 
-        show_provider_section(
-            rent,
-            "RENT",
-            "Rent"
-        )
+            st.subheader(
+                "Streaming"
+            )
 
-        # -------------------------
-        # Buy
-        # -------------------------
+            show_provider_section(
+                "Streaming",
+                streaming,
+                "Streaming"
+            )
 
-        show_provider_section(
-            buy,
-            "BUY",
-            "Buy"
-        )
 
-        # -------------------------
-        # No Availability
-        # -------------------------
+        # -------------------------------------------------
+        # RENT
+        # -------------------------------------------------
 
-        if (
-            not flatrate
-            and not rent
-            and not buy
-        ):
+        if rent:
+
+            st.subheader(
+                "Rent"
+            )
+
+            show_provider_section(
+                "Rent",
+                rent,
+                "Rent"
+            )
+
+
+        # -------------------------------------------------
+        # BUY
+        # -------------------------------------------------
+
+        if buy:
+
+            st.subheader(
+                "Buy"
+            )
+
+            show_provider_section(
+                "Buy",
+                buy,
+                "Buy"
+            )
+
+
+        # -------------------------------------------------
+        # NOTHING FOUND
+        # -------------------------------------------------
+
+        if not streaming and not rent and not buy:
 
             st.info(
-                "No OTT availability information "
-                "is currently available for India."
+                "No OTT availability is currently listed "
+                "for India."
             )
+
 
     except TMDBError:
 
         st.info(
-            "OTT availability information "
-            "is currently unavailable."
+            "OTT availability information is currently unavailable."
         )
