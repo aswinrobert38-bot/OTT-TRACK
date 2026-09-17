@@ -1,7 +1,4 @@
-import html
 import streamlit as st
-
-from streamlit_image_coordinates import streamlit_image_coordinates
 
 from services.tmdb_service import (
     TMDBError,
@@ -11,13 +8,10 @@ from services.tmdb_service import (
 )
 
 
-def show_movies(movies, section_name, section_key):
+def show_movies(movies, section_name):
 
     st.markdown(
-        '<div class="section-title">' +
-        html.escape(section_name) +
-        '</div>',
-        unsafe_allow_html=True
+        "## " + section_name
     )
 
     if not movies:
@@ -31,30 +25,32 @@ def show_movies(movies, section_name, section_key):
         with columns[index % 6]:
 
             title = movie.get("title") or "Untitled"
-            release_date = movie.get("release_date") or ""
+
+            release_date = (
+                movie.get("release_date")
+                or ""
+            )
+
             year = release_date[:4]
 
-            rating = movie.get("rating", 0)
-            poster = movie.get("poster_url")
-            movie_id = movie.get("id")
+            rating = movie.get(
+                "rating",
+                0
+            )
+
+            poster = movie.get(
+                "poster_url"
+            )
+
+            movie_id = movie.get(
+                "id"
+            )
 
             # -------------------------
-            # Clickable Poster
+            # Movie Poster
             # -------------------------
 
-            if poster and movie_id:
-
-                clicked = streamlit_image_coordinates(
-                    poster,
-                    width=180,
-                    key=f"poster_{section_key}_{index}"
-                )
-
-                if clicked is not None:
-                    st.session_state.selected_movie_id = movie_id
-                    st.rerun()
-
-            elif poster:
+            if poster:
 
                 st.image(
                     poster,
@@ -64,12 +60,7 @@ def show_movies(movies, section_name, section_key):
             else:
 
                 st.markdown(
-                    """
-                    <div class="poster-fallback">
-                        NO POSTER
-                    </div>
-                    """,
-                    unsafe_allow_html=True
+                    "### No Poster"
                 )
 
             # -------------------------
@@ -77,10 +68,7 @@ def show_movies(movies, section_name, section_key):
             # -------------------------
 
             st.markdown(
-                '<div class="movie-title">' +
-                html.escape(title) +
-                '</div>',
-                unsafe_allow_html=True
+                "**" + title + "**"
             )
 
             # -------------------------
@@ -93,19 +81,41 @@ def show_movies(movies, section_name, section_key):
                 metadata.append(year)
 
             try:
+
                 metadata.append(
                     "★ " +
-                    str(round(float(rating), 1))
+                    str(
+                        round(
+                            float(rating),
+                            1
+                        )
+                    )
                 )
+
             except Exception:
                 pass
 
-            st.markdown(
-                '<div class="movie-meta">' +
-                " • ".join(metadata) +
-                '</div>',
-                unsafe_allow_html=True
-            )
+            if metadata:
+
+                st.caption(
+                    " • ".join(metadata)
+                )
+
+            # -------------------------
+            # Open Movie
+            # -------------------------
+
+            if movie_id:
+
+                if st.button(
+                    "Open Movie",
+                    key=f"movie_{movie_id}_{index}",
+                    use_container_width=True
+                ):
+
+                    st.session_state.selected_movie_id = movie_id
+
+                    st.rerun()
 
 
 def render_home():
@@ -115,21 +125,14 @@ def render_home():
     # -------------------------
 
     st.markdown(
-        """
-        <div class="hero">
-
-            <div class="hero-title">
-                ReelRoute
-            </div>
-
-            <div class="hero-text">
-                Every Movie. Every Platform. One Place.
-            </div>
-
-        </div>
-        """,
-        unsafe_allow_html=True
+        "# ReelRoute"
     )
+
+    st.markdown(
+        "### Every Movie. Every Platform. One Place."
+    )
+
+    st.divider()
 
     try:
 
@@ -140,9 +143,11 @@ def render_home():
         trending = get_trending()
 
         show_movies(
-            trending.get("results", []),
-            "Trending Movies",
-            "trending"
+            trending.get(
+                "results",
+                []
+            ),
+            "Trending Movies"
         )
 
         # -------------------------
@@ -152,9 +157,11 @@ def render_home():
         now_playing = get_now_playing()
 
         show_movies(
-            now_playing.get("results", []),
-            "Now Playing",
-            "now_playing"
+            now_playing.get(
+                "results",
+                []
+            ),
+            "Now Playing"
         )
 
         # -------------------------
@@ -164,11 +171,15 @@ def render_home():
         popular = get_popular()
 
         show_movies(
-            popular.get("results", []),
-            "Popular Movies",
-            "popular"
+            popular.get(
+                "results",
+                []
+            ),
+            "Popular Movies"
         )
 
     except TMDBError as error:
 
-        st.error(str(error))
+        st.error(
+            str(error)
+        )
