@@ -1,4 +1,4 @@
-```python
+
 import streamlit as st
 
 from components.movie_card import movie_card
@@ -167,4 +167,4 @@ def render_home():
             "to TMDB_TOKEN in the .env file, "
             "or add TMDB_TOKEN to Streamlit Cloud Secrets."
         )
-```
+
