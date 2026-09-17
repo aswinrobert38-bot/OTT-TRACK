@@ -1,169 +1,126 @@
 import streamlit as st
 
-from components.movie_card import movie_card
-
 from services.tmdb_service import (
     TMDBError,
     get_now_playing,
     get_popular,
-    get_trending,
-    get_upcoming,
-    search_movies,
+    get_trending
 )
 
 
-def _section(title, subtitle, movies, key_prefix):
-
-    if not movies:
-        return
+def show_movies(movies, section_name):
 
     st.markdown(
-        '<div class="section-heading">'
-        '<h2>' + title + '</h2>'
-        '<span>' + subtitle + '</span>'
+        '<div class="section-title">' +
+        section_name +
         '</div>',
         unsafe_allow_html=True
     )
 
-    cols = st.columns(6, gap="medium")
+    if not movies:
+        st.info("No movies available.")
+        return
 
-    for i, movie in enumerate(movies[:6]):
+    columns = st.columns(6)
 
-        with cols[i]:
+    for index, movie in enumerate(movies[:12]):
 
-            movie_card(
-                movie,
-                key_suffix=key_prefix + "_" + str(i)
+        with columns[index % 6]:
+
+            title = movie.get("title") or "Untitled"
+
+            release_date = (
+                movie.get("release_date") or ""
             )
+
+            year = release_date[:4]
+
+            rating = movie.get("rating", 0)
+
+            poster = movie.get("poster_url")
+
+            if poster:
+                st.image(
+                    poster,
+                    use_container_width=True
+                )
+            else:
+                st.markdown(
+                    """
+                    <div class="poster-fallback">
+                        NO POSTER
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            st.markdown(
+                '<div class="movie-title">' +
+                title +
+                '</div>',
+                unsafe_allow_html=True
+            )
+
+            st.markdown(
+                '<div class="movie-meta">' +
+                year +
+                " • ★ " +
+                str(round(float(rating), 1)) +
+                '</div>',
+                unsafe_allow_html=True
+            )
+
+            if st.button(
+                "View Details",
+                key="home_" + str(movie.get("id")),
+                use_container_width=True
+            ):
+
+                st.session_state.selected_movie_id = movie.get("id")
+
+                st.rerun()
 
 
 def render_home():
 
     st.markdown(
-        '<div class="hero">'
-        '<div class="hero-kicker">INDIA · MOVIES · OTT</div>'
-        '<h1>One search.<br>Every movie.</h1>'
-        '<p>'
-        'Search real movie data, open a full details page, '
-        'and check current India streaming availability '
-        'without invented OTT dates.'
-        '</p>'
-        '</div>',
+        """
+        <div class="hero">
+            <div class="hero-title">
+                OTTTrack
+            </div>
+
+            <div class="hero-text">
+                Every Movie. Every Platform. One Place.
+            </div>
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
-
-    query = st.text_input(
-        "Search",
-        placeholder="Search any movie — Leo, Interstellar, Vikram...",
-        label_visibility="collapsed",
-        key="home_search"
-    )
-
-
-    if query.strip():
-
-        try:
-
-            data = search_movies(
-                query.strip(),
-                page=1
-            )
-
-            results = data.get("results", [])
-
-        except TMDBError as exc:
-
-            st.error(str(exc))
-            return
-
-
-        st.markdown(
-            '<div class="result-line">'
-            + str(len(results))
-            + ' results for <b>'
-            + query.strip()
-            + '</b></div>',
-            unsafe_allow_html=True
-        )
-
-
-        if not results:
-
-            st.markdown(
-                '<div class="empty-state">'
-                '<h3>No movies found</h3>'
-                '<p>Try another movie title.</p>'
-                '</div>',
-                unsafe_allow_html=True
-            )
-
-            return
-
-
-        cols = st.columns(6, gap="medium")
-
-
-        for i, movie in enumerate(results[:18]):
-
-            with cols[i % 6]:
-
-                movie_card(
-                    movie,
-                    key_suffix="home_results_" + str(i)
-                )
-
-
-        return
-
-
     try:
 
-        trending_data = get_trending()
-        now_playing_data = get_now_playing()
-        popular_data = get_popular()
-        upcoming_data = get_upcoming()
+        trending = get_trending()
 
-
-        _section(
-            "Trending this week",
-            "Popular movies people are discovering now",
-            trending_data.get("results", []),
-            "trend"
+        show_movies(
+            trending.get("results", []),
+            "Trending Movies"
         )
 
+        now_playing = get_now_playing()
 
-        _section(
-            "Now playing in India",
-            "Movies currently listed in Indian theatrical releases",
-            now_playing_data.get("results", []),
-            "now"
+        show_movies(
+            now_playing.get("results", []),
+            "Now Playing"
         )
 
+        popular = get_popular()
 
-        _section(
-            "Popular",
-            "High-interest movies from TMDB",
-            popular_data.get("results", []),
-            "popular"
+        show_movies(
+            popular.get("results", []),
+            "Popular Movies"
         )
 
+    except TMDBError as error:
 
-        _section(
-            "Upcoming",
-            "Upcoming titles listed by TMDB for India",
-            upcoming_data.get("results", []),
-            "upcoming"
-        )
-
-
-    except TMDBError as exc:
-
-        st.error(str(exc))
-
-        st.info(
-            "Add a valid TMDB API Read Access Token "
-            "to TMDB_TOKEN in the .env file, "
-            "or add TMDB_TOKEN to Streamlit Cloud Secrets."
-        )
-
+        st.error(str(error))
