@@ -39,12 +39,21 @@ def show_movies(movies, section_name):
 
             poster = movie.get("poster_url")
 
+            movie_id = movie.get("id")
+
+            # -------------------------
+            # Poster
+            # -------------------------
+
             if poster:
+
                 st.image(
                     poster,
                     use_container_width=True
                 )
+
             else:
+
                 st.markdown(
                     """
                     <div class="poster-fallback">
@@ -54,6 +63,10 @@ def show_movies(movies, section_name):
                     unsafe_allow_html=True
                 )
 
+            # -------------------------
+            # Title
+            # -------------------------
+
             st.markdown(
                 '<div class="movie-title">' +
                 title +
@@ -61,31 +74,67 @@ def show_movies(movies, section_name):
                 unsafe_allow_html=True
             )
 
+            # -------------------------
+            # Metadata
+            # -------------------------
+
+            metadata = []
+
+            if year:
+                metadata.append(year)
+
+            try:
+
+                metadata.append(
+                    "★ " +
+                    str(round(float(rating), 1))
+                )
+
+            except Exception:
+
+                pass
+
             st.markdown(
                 '<div class="movie-meta">' +
-                year +
-                " • ★ " +
-                str(round(float(rating), 1)) +
+                " • ".join(metadata) +
                 '</div>',
                 unsafe_allow_html=True
             )
 
+            # -------------------------
+            # Details button
+            # -------------------------
+
+            button_key = (
+                "home_" +
+                section_name.lower().replace(" ", "_") +
+                "_" +
+                str(movie_id) +
+                "_" +
+                str(index)
+            )
+
             if st.button(
                 "View Details",
-                key="home_" + str(movie.get("id")),
+                key=button_key,
                 use_container_width=True
             ):
 
-                st.session_state.selected_movie_id = movie.get("id")
+                st.session_state.selected_movie_id = movie_id
 
                 st.rerun()
 
 
 def render_home():
 
+    # -------------------------
+    # Hero
+    # -------------------------
+
     st.markdown(
         """
         <div class="hero">
+
             <div class="hero-title">
                 OTTTrack
             </div>
@@ -93,12 +142,17 @@ def render_home():
             <div class="hero-text">
                 Every Movie. Every Platform. One Place.
             </div>
+
         </div>
         """,
         unsafe_allow_html=True
     )
 
     try:
+
+        # -------------------------
+        # Trending
+        # -------------------------
 
         trending = get_trending()
 
@@ -107,12 +161,20 @@ def render_home():
             "Trending Movies"
         )
 
+        # -------------------------
+        # Now Playing
+        # -------------------------
+
         now_playing = get_now_playing()
 
         show_movies(
             now_playing.get("results", []),
             "Now Playing"
         )
+
+        # -------------------------
+        # Popular
+        # -------------------------
 
         popular = get_popular()
 
