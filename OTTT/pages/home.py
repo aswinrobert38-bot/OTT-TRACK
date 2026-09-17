@@ -159,7 +159,7 @@ def movie_card(movie, key_suffix=""):
 
         if st.button(
             "View movie details",
-            key=f"home_movie_{movie_id}",
+            key=f"home_movie_{movie_id}_{key_suffix}",
             use_container_width=True
         ):
             st.session_state.open_movie_id = movie_id
