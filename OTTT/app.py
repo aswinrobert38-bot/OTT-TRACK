@@ -564,14 +564,6 @@ with st.sidebar:
 
 
 # =========================================================
-# MOVIE SELECTION STATE
-# =========================================================
-
-if "open_movie_id" not in st.session_state:
-    st.session_state.open_movie_id = None
-
-
-# =========================================================
 # HOME
 # =========================================================
 
@@ -582,7 +574,10 @@ render_home()
 # OPEN SELECTED MOVIE
 # =========================================================
 
-if st.session_state.open_movie_id is not None:
+if (
+    "open_movie_id" in st.session_state
+    and st.session_state.open_movie_id is not None
+):
 
     movie_id = st.session_state.open_movie_id
 
