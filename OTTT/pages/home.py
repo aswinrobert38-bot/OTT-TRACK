@@ -172,7 +172,7 @@ def movie_card(movie, key_suffix=""):
             use_container_width=True
         ):
 
-            # Store movie ID for app.py dialog
+            # Store selected movie ID
             st.session_state.open_movie_id = movie_id
 
             # Force app.py to process the dialog
@@ -374,7 +374,8 @@ def search_area():
             query = st.text_input(
                 "Movie name",
                 placeholder="Search any movie...",
-                label_visibility="collapsed"
+                label_visibility="collapsed",
+                key="movie_search_query"
             )
 
         with col2:
@@ -402,10 +403,10 @@ def search_area():
 
             movies = get_results(data)
 
-            show_search_results(
-                query.strip(),
-                movies
-            )
+            # Keep search results in session state so they survive
+            # the rerun caused by clicking a movie.
+            st.session_state.search_query = query.strip()
+            st.session_state.search_results = movies
 
         except TMDBError:
 
@@ -414,11 +415,36 @@ def search_area():
                 "Please check your TMDB connection."
             )
 
+            return
+
         except Exception as error:
 
             st.error(
                 f"Search failed: {error}"
             )
+
+            return
+
+    # -----------------------------------------------------
+    # SHOW SAVED SEARCH RESULTS ON EVERY RERUN
+    # -----------------------------------------------------
+
+    saved_results = st.session_state.get(
+        "search_results",
+        []
+    )
+
+    saved_query = st.session_state.get(
+        "search_query",
+        ""
+    )
+
+    if saved_query:
+
+        show_search_results(
+            saved_query,
+            saved_results
+        )
 
 
 # =========================================================
