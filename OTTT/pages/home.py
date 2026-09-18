@@ -172,7 +172,7 @@ def movie_card(movie, key_suffix=""):
             use_container_width=True
         ):
 
-            # Store selected movie ID
+            # Store movie ID for app.py dialog
             st.session_state.open_movie_id = movie_id
 
             # Force app.py to process the dialog
