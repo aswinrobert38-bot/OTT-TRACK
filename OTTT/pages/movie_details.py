@@ -1,6 +1,8 @@
 import html
-from urllib.parse import quote_plus
+import re
+from urllib.parse import quote_plus, unquote
 
+import requests
 import streamlit as st
 
 from services.tmdb_service import (
@@ -13,20 +15,14 @@ from services.tmdb_service import (
 
 
 # =========================================================
-# HELPERS
+# GENERAL HELPERS
 # =========================================================
 
 def get_languages(item):
-
-    languages = item.get(
-        "spoken_languages",
-        []
-    )
-
+    languages = item.get("spoken_languages", [])
     names = []
 
     for language in languages:
-
         name = (
             language.get("english_name")
             or language.get("name")
@@ -36,24 +32,17 @@ def get_languages(item):
             names.append(name)
 
     if not names and item.get("original_language"):
-
         names.append(
-            str(
-                item.get("original_language")
-            ).upper()
+            str(item.get("original_language")).upper()
         )
 
     return names
 
 
 def get_cast(item):
-
-    cast = item.get(
-        "credits",
-        {}
-    ).get(
-        "cast",
-        []
+    cast = (
+        item.get("credits", {})
+        .get("cast", [])
     )
 
     return [
@@ -64,21 +53,16 @@ def get_cast(item):
 
 
 def get_directors(item):
-
-    crew = item.get(
-        "credits",
-        {}
-    ).get(
-        "crew",
-        []
+    crew = (
+        item.get("credits", {})
+        .get("crew", [])
     )
 
     return list(
         dict.fromkeys(
             person.get("name")
             for person in crew
-            if person.get("job")
-            in (
+            if person.get("job") in (
                 "Director",
                 "Creator"
             )
@@ -92,24 +76,12 @@ def get_directors(item):
 # =========================================================
 
 def get_provider_type(category):
-
     return {
-
-        "flatrate":
-            "Streaming",
-
-        "free":
-            "Free",
-
-        "ads":
-            "Free with Ads",
-
-        "rent":
-            "Rent",
-
-        "buy":
-            "Buy"
-
+        "flatrate": "Streaming",
+        "free": "Free",
+        "ads": "Free with Ads",
+        "rent": "Rent",
+        "buy": "Buy",
     }.get(
         category,
         str(category).title()
@@ -117,17 +89,14 @@ def get_provider_type(category):
 
 
 # =========================================================
-# GET INDIA PROVIDERS
+# INDIA PROVIDERS
 # =========================================================
 
 def get_india_providers(provider_data):
 
-    india = provider_data.get(
-        "results",
-        {}
-    ).get(
-        "IN",
-        {}
+    india = (
+        provider_data.get("results", {})
+        .get("IN", {})
     )
 
     providers = []
@@ -137,50 +106,40 @@ def get_india_providers(provider_data):
         "free",
         "ads",
         "rent",
-        "buy"
+        "buy",
     ]
 
     for category in categories:
 
-        for provider in india.get(
-            category,
-            []
-        ):
+        for provider in india.get(category, []):
 
-            logo = provider.get(
-                "logo_path"
-            )
+            logo = provider.get("logo_path")
 
             providers.append(
                 {
-                    "id":
-                        provider.get(
-                            "provider_id"
-                        ),
+                    "id": provider.get(
+                        "provider_id"
+                    ),
 
-                    "name":
-                        provider.get(
-                            "provider_name",
-                            "Unknown"
-                        ),
+                    "name": provider.get(
+                        "provider_name",
+                        "Unknown"
+                    ),
 
-                    "logo":
-                        (
-                            "https://image.tmdb.org/t/p/w92"
-                            + logo
-                            if logo
-                            else None
-                        ),
+                    "logo": (
+                        "https://image.tmdb.org/t/p/w92"
+                        + logo
+                        if logo
+                        else None
+                    ),
 
-                    "type":
-                        get_provider_type(
-                            category
-                        ),
+                    "type": get_provider_type(
+                        category
+                    ),
 
-                    "tmdb_link":
-                        india.get(
-                            "link"
-                        )
+                    "tmdb_link": india.get(
+                        "link"
+                    ),
                 }
             )
 
@@ -188,163 +147,495 @@ def get_india_providers(provider_data):
 
 
 # =========================================================
-# PROVIDER TITLE SEARCH
+# PROVIDER CONFIGURATION
 # =========================================================
 
-def provider_search_url(provider_name, title):
+PROVIDER_CONFIG = {
 
-    query = quote_plus(title.strip())
-    name = provider_name.lower().strip()
+    "netflix": {
+        "domain": "netflix.com",
+        "search": "https://www.netflix.com/search?q={query}",
+        "patterns": [
+            r"https?://(?:www\.)?netflix\.com/title/\d+",
+        ],
+    },
 
-    # -----------------------------------------------------
-    # NETFLIX
-    # -----------------------------------------------------
+    "prime video": {
+        "domain": "primevideo.com",
+        "search": (
+            "https://www.primevideo.com/search/"
+            "ref=atv_nb_sr?phrase={query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?primevideo\.com/detail/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+
+    "amazon": {
+        "domain": "primevideo.com",
+        "search": (
+            "https://www.primevideo.com/search/"
+            "ref=atv_nb_sr?phrase={query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?primevideo\.com/detail/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+
+    "jiohotstar": {
+        "domain": "hotstar.com",
+        "search": (
+            "https://www.hotstar.com/in/search?q={query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?hotstar\.com/in/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+
+    "hotstar": {
+        "domain": "hotstar.com",
+        "search": (
+            "https://www.hotstar.com/in/search?q={query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?hotstar\.com/in/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+
+    "sony liv": {
+        "domain": "sonyliv.com",
+        "search": (
+            "https://www.sonyliv.com/search/{query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?sonyliv\.com/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+
+    "zee5": {
+        "domain": "zee5.com",
+        "search": (
+            "https://www.zee5.com/search?q={query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?zee5\.com/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+
+    "youtube": {
+        "domain": "youtube.com",
+        "search": (
+            "https://www.youtube.com/results?"
+            "search_query={query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?youtube\.com/watch\?v=[A-Za-z0-9_-]+",
+        ],
+    },
+
+    "apple tv": {
+        "domain": "tv.apple.com",
+        "search": (
+            "https://tv.apple.com/in/search?term={query}"
+        ),
+        "patterns": [
+            r"https?://tv\.apple\.com/in/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+
+    "aha": {
+        "domain": "aha.video",
+        "search": (
+            "https://www.aha.video/search/{query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?aha\.video/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+
+    "mx player": {
+        "domain": "mxplayer.in",
+        "search": (
+            "https://www.mxplayer.in/search/{query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?mxplayer\.in/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+
+    "lionsgate play": {
+        "domain": "lionsgateplay.com",
+        "search": (
+            "https://www.lionsgateplay.com/search?q={query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?lionsgateplay\.com/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+
+    "discovery+": {
+        "domain": "discoveryplus.in",
+        "search": (
+            "https://www.discoveryplus.in/search?q={query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?discoveryplus\.in/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+
+    "crunchyroll": {
+        "domain": "crunchyroll.com",
+        "search": (
+            "https://www.crunchyroll.com/search?q={query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?crunchyroll\.com/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+
+    "sun nxt": {
+        "domain": "sunnxt.com",
+        "search": (
+            "https://www.sunnxt.com/search/{query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?sunnxt\.com/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+
+    "manorama": {
+        "domain": "manoramamax.com",
+        "search": (
+            "https://www.manoramamax.com/search/{query}"
+        ),
+        "patterns": [
+            r"https?://(?:www\.)?manoramamax\.com/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
+        ],
+    },
+}
+
+
+# =========================================================
+# NORMALIZE PROVIDER NAME
+# =========================================================
+
+def get_provider_config(provider_name):
+
+    name = (
+        provider_name
+        .strip()
+        .lower()
+    )
 
     if "netflix" in name:
-        return (
-            "https://www.netflix.com/search?q="
-            + query
-        )
-
-    # -----------------------------------------------------
-    # PRIME VIDEO
-    # -----------------------------------------------------
+        return PROVIDER_CONFIG["netflix"]
 
     if (
         "prime video" in name
         or "amazon prime" in name
-        or "amazon" in name
+        or name == "amazon"
     ):
-        return (
-            "https://www.primevideo.com/search/ref=atv_nb_sr?phrase="
-            + query
-        )
-
-    # -----------------------------------------------------
-    # JIOHOTSTAR
-    # -----------------------------------------------------
+        return PROVIDER_CONFIG["prime video"]
 
     if (
         "jiohotstar" in name
         or "jio hotstar" in name
-        or "hotstar" in name
     ):
-        return (
-            "https://www.hotstar.com/in/search?q="
-            + query
-        )
+        return PROVIDER_CONFIG["jiohotstar"]
 
-    # -----------------------------------------------------
-    # SONY LIV
-    # -----------------------------------------------------
+    if "hotstar" in name:
+        return PROVIDER_CONFIG["hotstar"]
 
     if "sony liv" in name:
-        return (
-            "https://www.sonyliv.com/search/"
-            + query
-        )
-
-    # -----------------------------------------------------
-    # ZEE5
-    # -----------------------------------------------------
+        return PROVIDER_CONFIG["sony liv"]
 
     if "zee5" in name:
-        return (
-            "https://www.zee5.com/search?q="
-            + query
-        )
-
-    # -----------------------------------------------------
-    # AHA
-    # -----------------------------------------------------
-
-    if name == "aha" or name.startswith("aha "):
-        return (
-            "https://www.aha.video/search/"
-            + query
-        )
-
-    # -----------------------------------------------------
-    # MX PLAYER
-    # -----------------------------------------------------
-
-    if "mx player" in name:
-        return (
-            "https://www.mxplayer.in/search/"
-            + query
-        )
-
-    # -----------------------------------------------------
-    # LIONSGATE PLAY
-    # -----------------------------------------------------
-
-    if "lionsgate" in name:
-        return (
-            "https://www.lionsgateplay.com/search?q="
-            + query
-        )
-
-    # -----------------------------------------------------
-    # DISCOVERY+
-    # -----------------------------------------------------
-
-    if "discovery" in name:
-        return (
-            "https://www.discoveryplus.in/search?q="
-            + query
-        )
-
-    # -----------------------------------------------------
-    # CRUNCHYROLL
-    # -----------------------------------------------------
-
-    if "crunchyroll" in name:
-        return (
-            "https://www.crunchyroll.com/search?q="
-            + query
-        )
-
-    # -----------------------------------------------------
-    # SUN NXT
-    # -----------------------------------------------------
-
-    if "sun nxt" in name:
-        return (
-            "https://www.sunnxt.com/search/"
-            + query
-        )
-
-    # -----------------------------------------------------
-    # MANORAMA MAX
-    # -----------------------------------------------------
-
-    if "manorama" in name:
-        return (
-            "https://www.manoramamax.com/search/"
-            + query
-        )
-
-    # -----------------------------------------------------
-    # YOUTUBE
-    # -----------------------------------------------------
+        return PROVIDER_CONFIG["zee5"]
 
     if "youtube" in name:
-        return (
-            "https://www.youtube.com/results?search_query="
-            + query
-        )
-
-    # -----------------------------------------------------
-    # APPLE TV
-    # -----------------------------------------------------
+        return PROVIDER_CONFIG["youtube"]
 
     if "apple tv" in name:
-        return (
-            "https://tv.apple.com/in/search?term="
-            + query
+        return PROVIDER_CONFIG["apple tv"]
+
+    if name == "aha" or name.startswith("aha "):
+        return PROVIDER_CONFIG["aha"]
+
+    if "mx player" in name:
+        return PROVIDER_CONFIG["mx player"]
+
+    if "lionsgate" in name:
+        return PROVIDER_CONFIG["lionsgate play"]
+
+    if "discovery" in name:
+        return PROVIDER_CONFIG["discovery+"]
+
+    if "crunchyroll" in name:
+        return PROVIDER_CONFIG["crunchyroll"]
+
+    if "sun nxt" in name:
+        return PROVIDER_CONFIG["sun nxt"]
+
+    if "manorama" in name:
+        return PROVIDER_CONFIG["manorama"]
+
+    return None
+
+
+# =========================================================
+# FALLBACK PROVIDER SEARCH URL
+# =========================================================
+
+def provider_search_url(provider_name, title):
+
+    config = get_provider_config(
+        provider_name
+    )
+
+    query = quote_plus(
+        title.strip()
+    )
+
+    if config:
+        return config["search"].format(
+            query=query
         )
 
     return None
+
+
+# =========================================================
+# EXTRACT URL FROM SEARCH RESULT
+# =========================================================
+
+def clean_result_url(url):
+
+    if not url:
+        return None
+
+    url = html.unescape(url)
+
+    url = url.replace(
+        "&amp;",
+        "&"
+    )
+
+    # Remove Bing redirect wrappers
+    if "u=" in url and (
+        "bing.com/ck/a" in url
+        or "bing.com/aclick" in url
+    ):
+        match = re.search(
+            r"[?&]u=([^&]+)",
+            url
+        )
+
+        if match:
+            try:
+                url = unquote(
+                    match.group(1)
+                )
+            except Exception:
+                pass
+
+    return url
+
+
+# =========================================================
+# VERIFY URL BELONGS TO PROVIDER
+# =========================================================
+
+def is_provider_url(url, domain):
+
+    if not url:
+        return False
+
+    value = url.lower()
+
+    return (
+        domain.lower() in value
+        and not any(
+            blocked in value
+            for blocked in [
+                "/search",
+                "search?",
+                "/browse",
+                "/collections",
+            ]
+        )
+    )
+
+
+# =========================================================
+# EXACT OTT LINK RESOLVER
+# =========================================================
+
+@st.cache_data(
+    ttl=60 * 60 * 12,
+    show_spinner=False
+)
+def resolve_exact_ott_url(
+    provider_name,
+    title
+):
+
+    config = get_provider_config(
+        provider_name
+    )
+
+    if not config:
+        return None
+
+    domain = config["domain"]
+
+    # Search query specifically restricted
+    # to the OTT provider's domain.
+    search_query = (
+        f'site:{domain} "{title}"'
+    )
+
+    bing_url = (
+        "https://www.bing.com/search?q="
+        + quote_plus(search_query)
+    )
+
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 "
+            "(Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 "
+            "(KHTML, like Gecko) "
+            "Chrome/153.0 Safari/537.36"
+        )
+    }
+
+    try:
+
+        response = requests.get(
+            bing_url,
+            headers=headers,
+            timeout=8
+        )
+
+        if response.status_code != 200:
+            return None
+
+        page = response.text
+
+    except Exception:
+        return None
+
+    # -----------------------------------------------------
+    # First try provider-specific URL patterns
+    # -----------------------------------------------------
+
+    for pattern in config["patterns"]:
+
+        matches = re.findall(
+            pattern,
+            page,
+            flags=re.IGNORECASE
+        )
+
+        for match in matches:
+
+            url = clean_result_url(
+                match
+            )
+
+            if is_provider_url(
+                url,
+                domain
+            ):
+
+                return url
+
+    # -----------------------------------------------------
+    # Generic href extraction
+    # -----------------------------------------------------
+
+    hrefs = re.findall(
+        r'href=["\']([^"\']+)["\']',
+        page,
+        flags=re.IGNORECASE
+    )
+
+    for href in hrefs:
+
+        url = clean_result_url(
+            href
+        )
+
+        if not is_provider_url(
+            url,
+            domain
+        ):
+            continue
+
+        # Ignore generic provider pages
+        lowered = url.lower()
+
+        if lowered.endswith(
+            (
+                ".com",
+                ".in",
+                ".com/",
+                ".in/",
+            )
+        ):
+            continue
+
+        return url
+
+    return None
+
+
+# =========================================================
+# RESOLVE FINAL OTT URL
+# =========================================================
+
+def get_final_ott_url(
+    provider,
+    title
+):
+
+    provider_name = provider.get(
+        "name",
+        ""
+    )
+
+    # -----------------------------------------------------
+    # 1. Try exact provider title URL
+    # -----------------------------------------------------
+
+    exact_url = resolve_exact_ott_url(
+        provider_name,
+        title
+    )
+
+    if exact_url:
+        return exact_url
+
+    # -----------------------------------------------------
+    # 2. Provider search fallback
+    # -----------------------------------------------------
+
+    search_url = provider_search_url(
+        provider_name,
+        title
+    )
+
+    if search_url:
+        return search_url
+
+    # -----------------------------------------------------
+    # 3. TMDB / JustWatch fallback
+    # -----------------------------------------------------
+
+    return provider.get(
+        "tmdb_link"
+    )
+
 
 # =========================================================
 # CLICKABLE OTT CARD
@@ -370,26 +661,19 @@ def render_provider(
     )
 
     # -----------------------------------------------------
-    # GET TITLE SEARCH URL
+    # RESOLVE EXACT LINK
     # -----------------------------------------------------
 
-    url = provider_search_url(
-        name,
-        title
-    )
+    with st.spinner(
+        f"Finding {name} title..."
+    ):
 
-    # -----------------------------------------------------
-    # FALLBACK
-    # -----------------------------------------------------
-
-    if not url:
-
-        url = provider.get(
-            "tmdb_link"
+        url = get_final_ott_url(
+            provider,
+            title
         )
 
     if not url:
-
         return
 
     # -----------------------------------------------------
@@ -419,16 +703,15 @@ def render_provider(
 
     card = f"""
     <a
-        href="{html.escape(url)}"
+        href="{html.escape(url, quote=True)}"
         target="_blank"
         rel="noopener noreferrer"
         class="ott-card"
+        title="Open {html.escape(title)} on {html.escape(name)}"
     >
 
         <div class="ott-logo-container">
-
             {logo_html}
-
         </div>
 
         <div class="ott-details">
@@ -450,8 +733,6 @@ def render_provider(
     </a>
     """
 
-    # IMPORTANT
-    # st.html makes the entire card clickable.
     st.html(card)
 
 
@@ -473,68 +754,39 @@ def render_watch_section(
         <style>
 
         .ott-section-title {
-
             font-size: 30px;
-
             font-weight: 800;
-
             margin-top: 10px;
-
             margin-bottom: 5px;
-
         }
-
 
         .ott-section-subtitle {
-
             font-size: 14px;
-
             opacity: 0.60;
-
             margin-bottom: 25px;
-
         }
-
 
         .ott-category {
-
             font-size: 18px;
-
             font-weight: 750;
-
             margin-top: 20px;
-
             margin-bottom: 14px;
-
         }
 
-
         .ott-card {
-
             display: flex;
-
             align-items: center;
-
             gap: 14px;
-
             width: 100%;
-
             min-height: 82px;
-
             padding: 12px 14px;
-
             margin-bottom: 12px;
-
             box-sizing: border-box;
-
             border-radius: 18px;
-
             text-decoration: none !important;
-
             color: inherit !important;
 
             background:
-
                 linear-gradient(
                     145deg,
                     rgba(255,255,255,0.10),
@@ -542,147 +794,95 @@ def render_watch_section(
                 );
 
             border:
-
                 1px solid
                 rgba(255,255,255,0.10);
 
             transition:
-
                 transform 0.20s ease,
-
                 border-color 0.20s ease,
-
                 background 0.20s ease,
-
                 box-shadow 0.20s ease;
-
         }
 
-
         .ott-card:hover {
-
-            transform:
-                translateY(-4px);
+            transform: translateY(-4px);
 
             border-color:
-                rgba(255,255,255,0.32);
+                rgba(32,215,215,0.65);
 
             background:
-
                 linear-gradient(
                     145deg,
-                    rgba(255,255,255,0.16),
+                    rgba(32,215,215,0.14),
                     rgba(255,255,255,0.045)
                 );
 
             box-shadow:
-
                 0 12px 30px
-                rgba(0,0,0,0.22);
-
+                rgba(0,0,0,0.30);
         }
 
-
         .ott-logo-container {
-
             width: 56px;
-
             height: 56px;
-
             min-width: 56px;
 
             border-radius: 15px;
 
             display: flex;
-
             align-items: center;
-
             justify-content: center;
 
             overflow: hidden;
 
             background:
                 rgba(255,255,255,0.08);
-
         }
-
 
         .ott-logo {
-
             width: 48px;
-
             height: 48px;
-
             object-fit: cover;
-
             border-radius: 12px;
-
             display: block;
-
         }
-
 
         .ott-placeholder {
-
             font-size: 22px;
-
         }
-
 
         .ott-details {
-
             flex: 1;
-
             min-width: 0;
-
         }
-
 
         .ott-name {
-
             font-size: 15px;
-
             font-weight: 750;
-
             white-space: nowrap;
-
             overflow: hidden;
-
             text-overflow: ellipsis;
-
         }
-
 
         .ott-type {
-
             font-size: 12px;
-
             opacity: 0.55;
-
             margin-top: 4px;
-
         }
 
-
         .ott-open {
-
             font-size: 23px;
-
             opacity: 0.60;
 
             transition:
                 transform 0.20s ease;
-
         }
 
-
         .ott-card:hover .ott-open {
-
             transform:
                 translate(3px,-3px);
 
             opacity: 1;
-
         }
 
         </style>
@@ -700,7 +900,7 @@ def render_watch_section(
         </div>
 
         <div class="ott-section-subtitle">
-            Click an OTT platform to find this title
+            Click an OTT platform to open this title
         </div>
         """
     )
@@ -713,14 +913,18 @@ def render_watch_section(
 
         if content_type == "tv":
 
-            provider_data = get_tv_watch_providers(
-                item["id"]
+            provider_data = (
+                get_tv_watch_providers(
+                    item["id"]
+                )
             )
 
         else:
 
-            provider_data = get_watch_providers(
-                item["id"]
+            provider_data = (
+                get_watch_providers(
+                    item["id"]
+                )
             )
 
     except TMDBError as error:
@@ -790,7 +994,7 @@ def render_watch_section(
         "Free",
         "Free with Ads",
         "Rent",
-        "Buy"
+        "Buy",
     ]
 
     # =====================================================
@@ -802,7 +1006,8 @@ def render_watch_section(
         group = [
             provider
             for provider in unique
-            if provider.get("type") == category
+            if provider.get("type")
+            == category
         ]
 
         if not group:
@@ -816,7 +1021,6 @@ def render_watch_section(
             """
         )
 
-        # Two cards per row
         for i in range(
             0,
             len(group),
@@ -864,7 +1068,6 @@ def render_movie_details(
     ):
 
         st.session_state.open_content = None
-
         st.session_state.open_movie_id = None
 
         st.rerun()
@@ -889,10 +1092,7 @@ def render_movie_details(
 
     except TMDBError as error:
 
-        st.error(
-            str(error)
-        )
-
+        st.error(str(error))
         return
 
     # =====================================================
@@ -983,16 +1183,17 @@ def render_movie_details(
 
         st.write("")
 
+        try:
+            rating_value = round(
+                float(rating or 0),
+                1
+            )
+        except Exception:
+            rating_value = 0
+
         st.markdown(
             "**★ Rating:** "
-            + str(
-                round(
-                    float(
-                        rating or 0
-                    ),
-                    1
-                )
-            )
+            + str(rating_value)
         )
 
         st.markdown(
@@ -1172,9 +1373,9 @@ def render_movie_details(
                 ) or "N/A"
 
                 st.markdown(
-                    f"**{html.escape(name)}**"
-                    f" • {episodes} episodes"
-                    f" • {air}"
+                    f"**{html.escape(name)}** "
+                    f"• {episodes} episodes "
+                    f"• {html.escape(str(air))}"
                 )
 
     # =====================================================
@@ -1191,8 +1392,10 @@ def render_movie_details(
                 "results",
                 []
             )
-            if video.get("site") == "YouTube"
-            and video.get("type") == "Trailer"
+            if video.get("site")
+            == "YouTube"
+            and video.get("type")
+            == "Trailer"
         ),
         None
     )
@@ -1228,5 +1431,6 @@ def render_movie_details(
     )
 
     st.caption(
-        "This product uses the TMDB API but is not endorsed or certified by TMDB."
+        "This product uses the TMDB API but is not endorsed "
+        "or certified by TMDB."
     )
