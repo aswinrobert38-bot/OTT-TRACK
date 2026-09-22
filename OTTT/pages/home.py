@@ -3,11 +3,19 @@ import streamlit as st
 
 from services.tmdb_service import (
     TMDBError,
+
     get_now_playing,
     get_popular,
     get_trending,
     get_upcoming,
+
+    get_popular_tv,
+    get_trending_tv,
+    get_airing_today_tv,
+
     search_movies,
+    search_multi,
+    search_tv,
 )
 
 
@@ -16,32 +24,45 @@ from services.tmdb_service import (
 # =========================================================
 
 def get_results(data):
+
     if isinstance(data, dict):
-        return data.get("results", [])
+
+        return data.get(
+            "results",
+            []
+        )
 
     if isinstance(data, list):
+
         return data
 
     return []
 
 
-def get_title(movie):
+def get_title(item):
+
     return (
-        movie.get("title")
-        or movie.get("name")
+        item.get("title")
+        or item.get("name")
         or "Untitled"
     )
 
 
-def get_poster(movie):
-    poster = movie.get("poster_url")
+def get_poster(item):
+
+    poster = item.get(
+        "poster_url"
+    )
 
     if poster:
         return poster
 
-    poster_path = movie.get("poster_path")
+    poster_path = item.get(
+        "poster_path"
+    )
 
     if poster_path:
+
         return (
             "https://image.tmdb.org/t/p/w500"
             + poster_path
@@ -50,132 +71,139 @@ def get_poster(movie):
     return None
 
 
-def get_year(movie):
+def get_year(item):
+
     release_date = (
-        movie.get("release_date")
-        or movie.get("first_air_date")
+        item.get("release_date")
+        or item.get("first_air_date")
         or ""
     )
 
     if release_date:
+
         return release_date[:4]
 
     return "N/A"
 
 
-def get_rating(movie):
-    rating = movie.get("rating")
+def get_rating(item):
+
+    rating = item.get(
+        "rating"
+    )
 
     if rating is None:
-        rating = movie.get("vote_average")
+
+        rating = item.get(
+            "vote_average"
+        )
 
     if rating is None:
+
         return "N/A"
 
     try:
-        return str(round(float(rating), 1))
+
+        return str(
+            round(
+                float(rating),
+                1
+            )
+        )
+
     except Exception:
+
         return "N/A"
 
 
-def get_language(movie):
+def get_language(item):
+
     language = (
-        movie.get("original_language")
-        or movie.get("language")
+        item.get("original_language")
+        or item.get("language")
     )
 
     if not language:
+
         return "N/A"
 
-    return str(language).upper()
-
-
-def get_movie_languages(movie):
-    """
-    Get actual language metadata when available.
-    Does not invent provider-specific languages.
-    """
-
-    languages = movie.get("spoken_languages")
-
-    if isinstance(languages, list):
-
-        result = []
-
-        for item in languages:
-
-            if isinstance(item, dict):
-
-                name = (
-                    item.get("english_name")
-                    or item.get("name")
-                    or item.get("iso_639_1")
-                )
-
-                if name and name not in result:
-                    result.append(str(name))
-
-        if result:
-            return result
-
-    original_language = movie.get("original_language")
-
-    if original_language:
-        return [str(original_language).upper()]
-
-    return []
+    return str(
+        language
+    ).upper()
 
 
 # =========================================================
-# MOVIE CARD
+# CONTENT CARD
 # =========================================================
 
-def movie_card(movie, key_suffix=""):
+def content_card(
+    item,
+    key_suffix=""
+):
 
-    movie_id = movie.get("id")
+    content_id = item.get(
+        "id"
+    )
 
-    title = get_title(movie)
-    poster = get_poster(movie)
-    year = get_year(movie)
-    rating = get_rating(movie)
-    language = get_language(movie)
+    content_type = item.get(
+        "content_type",
+        "movie"
+    )
+
+    title = get_title(
+        item
+    )
+
+    poster = get_poster(
+        item
+    )
+
+    year = get_year(
+        item
+    )
+
+    rating = get_rating(
+        item
+    )
+
+    language = get_language(
+        item
+    )
 
     # -----------------------------------------------------
     # POSTER
     # -----------------------------------------------------
 
-    if poster and movie_id:
+    if poster and content_id:
 
-        safe_title = html.escape(
-            str(title),
-            quote=True
-        )
-
-        safe_poster = html.escape(
-            str(poster),
-            quote=True
-        )
-
-        # Display poster
         st.image(
             poster,
             use_container_width=True
         )
 
-        # -------------------------------------------------
-        # MOVIE DETAILS BUTTON
-        # -------------------------------------------------
+        button_text = (
+            "View Series Details"
+            if content_type == "tv"
+            else "View Movie Details"
+        )
 
         if st.button(
-            "View movie details",
-            key=f"home_movie_{movie_id}_{key_suffix}",
+            button_text,
+            key=(
+                f"home_content_"
+                f"{content_id}_"
+                f"{key_suffix}"
+            ),
             use_container_width=True
         ):
 
-            # Store selected movie ID
-            st.session_state.open_movie_id = movie_id
+            st.session_state.open_content = {
+                "id": content_id,
+                "type": content_type
+            }
 
-            # Force app.py to process the dialog
+            st.session_state.open_movie_id = None
+
             st.rerun()
 
     elif poster:
@@ -196,52 +224,72 @@ def movie_card(movie, key_suffix=""):
     # -----------------------------------------------------
 
     st.markdown(
-        f"**{title}**"
+        f"**{html.escape(str(title))}**"
     )
 
     # -----------------------------------------------------
     # META
     # -----------------------------------------------------
 
+    content_label = (
+        "Series"
+        if content_type == "tv"
+        else "Movie"
+    )
+
     st.caption(
-        f"{year}  •  {language}  •  ★ {rating}"
+        f"{content_label}  •  "
+        f"{year}  •  "
+        f"{language}  •  "
+        f"★ {rating}"
     )
 
 
 # =========================================================
-# MOVIE SECTION
+# CONTENT SECTION
 # =========================================================
 
-def show_movies(
+def show_content(
     title,
     description,
-    movies,
+    items,
     limit=6
 ):
 
-    if not movies:
+    if not items:
+
+        st.info(
+            f"No titles available for {title}."
+        )
+
         return
 
-    st.subheader(title)
+    st.subheader(
+        title
+    )
 
-    st.caption(description)
+    st.caption(
+        description
+    )
 
     columns = st.columns(
         6,
         gap="medium"
     )
 
-    for index, movie in enumerate(
-        movies[:limit]
+    for index, item in enumerate(
+        items[:limit]
     ):
 
-        with columns[index % 6]:
+        with columns[
+            index % 6
+        ]:
 
-            movie_card(
-                movie,
+            content_card(
+                item,
                 key_suffix=(
-                    f"section_{index}_"
                     f"{title.replace(' ', '_')}"
+                    f"_{index}"
                 )
             )
 
@@ -252,7 +300,7 @@ def show_movies(
 
 def show_search_results(
     query,
-    movies
+    results
 ):
 
     st.divider()
@@ -262,13 +310,13 @@ def show_search_results(
     )
 
     st.caption(
-        f'{len(movies)} result(s) for "{query}"'
+        f'{len(results)} result(s) for "{query}"'
     )
 
-    if not movies:
+    if not results:
 
         st.info(
-            "No movies found. Try another title."
+            "No movies or web series found."
         )
 
         return
@@ -278,20 +326,154 @@ def show_search_results(
         gap="medium"
     )
 
-    for index, movie in enumerate(
-        movies[:24]
+    for index, item in enumerate(
+        results[:24]
     ):
 
-        with columns[index % 6]:
+        with columns[
+            index % 6
+        ]:
 
-            movie_card(
-                movie,
+            content_card(
+                item,
                 key_suffix=f"search_{index}"
             )
 
 
 # =========================================================
-# AVAILABLE LANGUAGES
+# SEARCH
+# =========================================================
+
+def search_area():
+
+    st.markdown(
+        """
+        <div class="search-heading">
+            Search Movies & Series
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.caption(
+        "Search movies and web series and explore "
+        "their details and India OTT availability."
+    )
+
+    content_type = st.radio(
+        "Content",
+        [
+            "All",
+            "Movies",
+            "Web Series"
+        ],
+        horizontal=True,
+        key="home_content_type"
+    )
+
+    with st.form(
+        "movie_search_form",
+        clear_on_submit=False
+    ):
+
+        col1, col2 = st.columns(
+            [5, 1],
+            gap="small"
+        )
+
+        with col1:
+
+            query = st.text_input(
+                "Title",
+                placeholder=(
+                    "Search any movie or web series..."
+                ),
+                label_visibility="collapsed",
+                key="movie_search_query"
+            )
+
+        with col2:
+
+            search_clicked = st.form_submit_button(
+                "Search",
+                use_container_width=True
+            )
+
+    if search_clicked:
+
+        if not query.strip():
+
+            st.warning(
+                "Please enter a title."
+            )
+
+            return
+
+        try:
+
+            if content_type == "Movies":
+
+                data = search_movies(
+                    query.strip()
+                )
+
+            elif content_type == "Web Series":
+
+                data = search_tv(
+                    query.strip()
+                )
+
+            else:
+
+                data = search_multi(
+                    query.strip()
+                )
+
+            st.session_state.search_query = (
+                query.strip()
+            )
+
+            st.session_state.search_results = (
+                get_results(data)
+            )
+
+        except TMDBError:
+
+            st.error(
+                "Unable to search right now. "
+                "Please check your TMDB connection."
+            )
+
+            return
+
+        except Exception as error:
+
+            st.error(
+                f"Search failed: {error}"
+            )
+
+            return
+
+    saved_results = st.session_state.get(
+        "search_results",
+        []
+    )
+
+    saved_query = st.session_state.get(
+        "search_query",
+        ""
+    )
+
+    if saved_query:
+
+        show_search_results(
+            saved_query,
+            saved_results
+        )
+
+
+# =========================================================
+# LANGUAGES
 # =========================================================
 
 def show_available_languages():
@@ -303,7 +485,7 @@ def show_available_languages():
     )
 
     st.caption(
-        "Browse the movie catalogue by language."
+        "Browse the catalogue by language."
     )
 
     languages = [
@@ -326,9 +508,13 @@ def show_available_languages():
         gap="small"
     )
 
-    for index, language in enumerate(languages):
+    for index, language in enumerate(
+        languages
+    ):
 
-        with columns[index % 4]:
+        with columns[
+            index % 4
+        ]:
 
             st.markdown(
                 f"""
@@ -341,114 +527,7 @@ def show_available_languages():
 
 
 # =========================================================
-# SEARCH AREA
-# =========================================================
-
-def search_area():
-
-    st.markdown(
-        """
-        <div class="search-heading">
-            Search Movies
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.caption(
-        "Search for any movie and explore its details and OTT availability."
-    )
-
-    with st.form(
-        "movie_search_form",
-        clear_on_submit=False
-    ):
-
-        col1, col2 = st.columns(
-            [5, 1],
-            gap="small"
-        )
-
-        with col1:
-
-            query = st.text_input(
-                "Movie name",
-                placeholder="Search any movie...",
-                label_visibility="collapsed",
-                key="movie_search_query"
-            )
-
-        with col2:
-
-            search_clicked = st.form_submit_button(
-                "Search",
-                use_container_width=True
-            )
-
-    if search_clicked:
-
-        if not query.strip():
-
-            st.warning(
-                "Please enter a movie name."
-            )
-
-            return
-
-        try:
-
-            data = search_movies(
-                query.strip()
-            )
-
-            movies = get_results(data)
-
-            # Keep search results in session state so they survive
-            # the rerun caused by clicking a movie.
-            st.session_state.search_query = query.strip()
-            st.session_state.search_results = movies
-
-        except TMDBError:
-
-            st.error(
-                "Unable to search movies right now. "
-                "Please check your TMDB connection."
-            )
-
-            return
-
-        except Exception as error:
-
-            st.error(
-                f"Search failed: {error}"
-            )
-
-            return
-
-    # -----------------------------------------------------
-    # SHOW SAVED SEARCH RESULTS ON EVERY RERUN
-    # -----------------------------------------------------
-
-    saved_results = st.session_state.get(
-        "search_results",
-        []
-    )
-
-    saved_query = st.session_state.get(
-        "search_query",
-        ""
-    )
-
-    if saved_query:
-
-        show_search_results(
-            saved_query,
-            saved_results
-        )
-
-
-# =========================================================
-# HOME PAGE
+# HOME
 # =========================================================
 
 def render_home():
@@ -464,7 +543,8 @@ def render_home():
         </div>
 
         <div class="hero-text">
-            Every Movie. Every Platform. One Place.
+            Every Movie & Series.
+            Every Platform. One Place.
         </div>
         """,
         unsafe_allow_html=True
@@ -477,19 +557,25 @@ def render_home():
     search_area()
 
     # =====================================================
-    # TRENDING
+    # MOVIES
     # =====================================================
+
+    st.markdown("## Movies")
+
+    # -----------------------------------------------------
+    # TRENDING MOVIES
+    # -----------------------------------------------------
 
     try:
 
-        trending = get_results(
+        trending_movies = get_results(
             get_trending()
         )
 
-        show_movies(
-            "Trending Now",
+        show_content(
+            "Trending Movies",
             "Movies people are discovering right now.",
-            trending,
+            trending_movies,
             6
         )
 
@@ -499,20 +585,20 @@ def render_home():
             "Trending movies could not be loaded."
         )
 
-    # =====================================================
-    # RECENTLY RELEASED
-    # =====================================================
+    # -----------------------------------------------------
+    # RECENT MOVIES
+    # -----------------------------------------------------
 
     try:
 
-        recently_released = get_results(
+        recent_movies = get_results(
             get_now_playing()
         )
 
-        show_movies(
-            "Recently Released",
+        show_content(
+            "Recently Released Movies",
             "Movies currently listed in theatrical releases.",
-            recently_released,
+            recent_movies,
             6
         )
 
@@ -522,20 +608,20 @@ def render_home():
             "Recently released movies could not be loaded."
         )
 
-    # =====================================================
-    # POPULAR
-    # =====================================================
+    # -----------------------------------------------------
+    # POPULAR MOVIES
+    # -----------------------------------------------------
 
     try:
 
-        popular = get_results(
+        popular_movies = get_results(
             get_popular()
         )
 
-        show_movies(
+        show_content(
             "Popular Movies",
             "Popular movie titles from TMDB.",
-            popular,
+            popular_movies,
             6
         )
 
@@ -546,8 +632,87 @@ def render_home():
         )
 
     # =====================================================
-    # COMING SOON
+    # WEB SERIES
     # =====================================================
+
+    st.divider()
+
+    st.markdown("## Web Series")
+
+    # -----------------------------------------------------
+    # TRENDING SERIES
+    # -----------------------------------------------------
+
+    try:
+
+        trending_series = get_results(
+            get_trending_tv()
+        )
+
+        show_content(
+            "Trending Web Series",
+            "Web series people are discovering right now.",
+            trending_series,
+            6
+        )
+
+    except TMDBError:
+
+        st.warning(
+            "Trending web series could not be loaded."
+        )
+
+    # -----------------------------------------------------
+    # POPULAR SERIES
+    # -----------------------------------------------------
+
+    try:
+
+        popular_series = get_results(
+            get_popular_tv()
+        )
+
+        show_content(
+            "Popular Web Series",
+            "Popular TV and web series from TMDB.",
+            popular_series,
+            6
+        )
+
+    except TMDBError:
+
+        st.warning(
+            "Popular web series could not be loaded."
+        )
+
+    # -----------------------------------------------------
+    # AIRING TODAY
+    # -----------------------------------------------------
+
+    try:
+
+        airing_series = get_results(
+            get_airing_today_tv()
+        )
+
+        show_content(
+            "Airing Today",
+            "Series currently airing today.",
+            airing_series,
+            6
+        )
+
+    except TMDBError:
+
+        st.warning(
+            "Airing web series could not be loaded."
+        )
+
+    # =====================================================
+    # UPCOMING MOVIES
+    # =====================================================
+
+    st.divider()
 
     try:
 
@@ -555,7 +720,7 @@ def render_home():
             get_upcoming()
         )
 
-        show_movies(
+        show_content(
             "Coming Soon",
             "Upcoming movies listed by TMDB.",
             upcoming,
@@ -569,13 +734,13 @@ def render_home():
         )
 
     # =====================================================
-    # AVAILABLE LANGUAGES
+    # LANGUAGES
     # =====================================================
 
     show_available_languages()
 
     # =====================================================
-    # OTT AVAILABILITY INFORMATION
+    # OTT
     # =====================================================
 
     st.divider()
@@ -585,11 +750,11 @@ def render_home():
     )
 
     st.caption(
-        "Movie availability varies by country and platform. "
-        "The movie details page shows the provider data returned by TMDB."
+        "Movie and web-series availability varies by "
+        "country and platform."
     )
 
     st.info(
-        "Select a movie to view its available streaming, "
-        "rental, and purchase platforms."
+        "Open any movie or series to view its available "
+        "streaming, rental, and purchase platforms in India."
     )
