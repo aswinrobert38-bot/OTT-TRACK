@@ -4,37 +4,52 @@ import streamlit as st
 from services.tmdb_service import (
     TMDBError,
     search_movies,
+    search_tv,
+    search_multi,
 )
 
+
+# =========================================================
+# HELPERS
+# =========================================================
 
 def get_results(data):
 
     if isinstance(data, dict):
-        return data.get("results", [])
+
+        return data.get(
+            "results",
+            []
+        )
 
     if isinstance(data, list):
+
         return data
 
     return []
 
 
-def get_movie_title(movie):
+def get_title(item):
 
     return (
-        movie.get("title")
-        or movie.get("name")
+        item.get("title")
+        or item.get("name")
         or "Untitled"
     )
 
 
-def get_movie_poster(movie):
+def get_poster(item):
 
-    poster = movie.get("poster_url")
+    poster = item.get(
+        "poster_url"
+    )
 
     if poster:
         return poster
 
-    poster_path = movie.get("poster_path")
+    poster_path = item.get(
+        "poster_path"
+    )
 
     if poster_path:
 
@@ -46,116 +61,159 @@ def get_movie_poster(movie):
     return None
 
 
-def movie_card(movie):
+def get_year(item):
 
-    movie_id = movie.get("id")
-
-    title = get_movie_title(movie)
-
-    poster = get_movie_poster(movie)
-
-    release_date = (
-        movie.get("release_date")
+    date = (
+        item.get("release_date")
+        or item.get("first_air_date")
         or ""
     )
 
-    year = (
-        release_date[:4]
-        if release_date
-        else "N/A"
-    )
+    if date:
 
-    rating = movie.get(
+        return date[:4]
+
+    return "N/A"
+
+
+def get_rating(item):
+
+    rating = item.get(
         "rating"
     )
 
     if rating is None:
 
-        rating = movie.get(
+        rating = item.get(
             "vote_average"
         )
 
     try:
 
-        rating_text = str(
-            round(float(rating), 1)
+        return str(
+            round(
+                float(rating),
+                1
+            )
         )
 
     except Exception:
 
-        rating_text = "N/A"
+        return "N/A"
+
+
+# =========================================================
+# CARD
+# =========================================================
+
+def content_card(item, index):
+
+    content_id = item.get(
+        "id"
+    )
+
+    content_type = item.get(
+        "content_type",
+        "movie"
+    )
+
+    title = get_title(
+        item
+    )
+
+    poster = get_poster(
+        item
+    )
+
+    year = get_year(
+        item
+    )
+
+    rating = get_rating(
+        item
+    )
 
     language = (
-        movie.get(
+        item.get(
             "original_language"
         )
         or "N/A"
     )
 
-    # -----------------------------------------
-    # CLICKABLE POSTER
-    # -----------------------------------------
+    # -----------------------------------------------------
+    # POSTER
+    # -----------------------------------------------------
 
-    if poster and movie_id:
-
-        safe_title = html.escape(
-            title,
-            quote=True
-        )
+    if poster:
 
         st.image(
             poster,
             use_container_width=True
+        )
+
+        button_text = (
+            "View Series Details"
+            if content_type == "tv"
+            else "View Movie Details"
         )
 
         if st.button(
-            "View movie details",
-            key=f"search_movie_{movie_id}",
+            button_text,
+            key=(
+                f"search_content_"
+                f"{content_id}_"
+                f"{index}"
+            ),
             use_container_width=True
         ):
-            st.session_state.open_movie_id = movie_id
+
+            st.session_state.open_content = {
+                "id": content_id,
+                "type": content_type
+            }
+
+            st.session_state.open_movie_id = None
+
             st.rerun()
-
-    elif poster:
-
-        st.image(
-            poster,
-            use_container_width=True
-        )
 
     else:
 
-        st.markdown(
-            """
-            <div class="poster-placeholder">
-                NO POSTER
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.info(
+            "Poster unavailable"
         )
 
-    # -----------------------------------------
+    # -----------------------------------------------------
     # TITLE
-    # -----------------------------------------
+    # -----------------------------------------------------
 
     st.markdown(
         f"""
         <div class="movie-card-title">
-            {html.escape(title)}
+            {html.escape(str(title))}
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    # -----------------------------------------
+    # -----------------------------------------------------
     # META
-    # -----------------------------------------
+    # -----------------------------------------------------
+
+    label = (
+        "Series"
+        if content_type == "tv"
+        else "Movie"
+    )
 
     st.markdown(
         f"""
         <div class="movie-card-meta">
 
-            {html.escape(year)}
+            {html.escape(label)}
+
+            <span>•</span>
+
+            {html.escape(str(year))}
 
             <span>•</span>
 
@@ -165,7 +223,7 @@ def movie_card(movie):
 
             <span>•</span>
 
-            ★ {html.escape(rating_text)}
+            ★ {html.escape(rating)}
 
         </div>
         """,
@@ -173,11 +231,11 @@ def movie_card(movie):
     )
 
 
-def render_search():
+# =========================================================
+# SEARCH PAGE
+# =========================================================
 
-    # =========================================
-    # HEADER
-    # =========================================
+def render_search():
 
     st.markdown(
         """
@@ -188,11 +246,12 @@ def render_search():
             </div>
 
             <h1>
-                Find your next movie
+                Find your next movie or series
             </h1>
 
             <p>
-                Search movies from across languages and years.
+                Search movies and web series from across
+                languages and years.
             </p>
 
         </div>
@@ -200,13 +259,30 @@ def render_search():
         unsafe_allow_html=True
     )
 
-    # =========================================
-    # SEARCH
-    # =========================================
+    # =====================================================
+    # CONTENT TYPE
+    # =====================================================
+
+    content_type = st.radio(
+        "Content",
+        [
+            "All",
+            "Movies",
+            "Web Series"
+        ],
+        horizontal=True,
+        key="search_page_content_type"
+    )
+
+    # =====================================================
+    # QUERY
+    # =====================================================
 
     query = st.text_input(
-        "Movie title",
-        placeholder="Search for a movie...",
+        "Title",
+        placeholder=(
+            "Search for a movie or web series..."
+        ),
         key="search_page_query",
         label_visibility="collapsed"
     )
@@ -218,12 +294,12 @@ def render_search():
             <div class="search-empty">
 
                 <div class="search-empty-title">
-                    Search the movie catalogue
+                    Search the movie & series catalogue
                 </div>
 
                 <div class="search-empty-text">
-                    Try Leo, Interstellar,
-                    Jailer, Vikram or any other movie.
+                    Try Leo, Interstellar, Jailer,
+                    Vikram or any web series.
                 </div>
 
             </div>
@@ -233,26 +309,45 @@ def render_search():
 
         return
 
-    # =========================================
-    # SEARCH API
-    # =========================================
+    # =====================================================
+    # SEARCH
+    # =====================================================
 
     try:
 
-        data = search_movies(
-            query.strip()
-        )
+        if content_type == "Movies":
 
-        movies = get_results(data)
+            data = search_movies(
+                query.strip()
+            )
+
+        elif content_type == "Web Series":
+
+            data = search_tv(
+                query.strip()
+            )
+
+        else:
+
+            data = search_multi(
+                query.strip()
+            )
+
+        results = get_results(
+            data
+        )
 
     except TMDBError as error:
 
-        st.error(str(error))
+        st.error(
+            str(error)
+        )
+
         return
 
-    # =========================================
+    # =====================================================
     # RESULTS HEADER
-    # =========================================
+    # =====================================================
 
     st.markdown(
         f"""
@@ -263,15 +358,13 @@ def render_search():
                 <span>RESULTS FOR</span>
 
                 <strong>
-                    {html.escape(
-                        query.strip()
-                    )}
+                    {html.escape(query.strip())}
                 </strong>
 
             </div>
 
             <div>
-                {len(movies)} movie(s)
+                {len(results)} result(s)
             </div>
 
         </div>
@@ -279,27 +372,32 @@ def render_search():
         unsafe_allow_html=True
     )
 
-    if not movies:
+    if not results:
 
         st.warning(
-            "No matching movies were found."
+            "No matching movies or web series were found."
         )
 
         return
 
-    # =========================================
-    # MOVIES
-    # =========================================
+    # =====================================================
+    # RESULTS
+    # =====================================================
 
     columns = st.columns(
         6,
         gap="medium"
     )
 
-    for index, movie in enumerate(
-        movies[:24]
+    for index, item in enumerate(
+        results[:24]
     ):
 
-        with columns[index % 6]:
+        with columns[
+            index % 6
+        ]:
 
-            movie_card(movie)
+            content_card(
+                item,
+                index
+            )
