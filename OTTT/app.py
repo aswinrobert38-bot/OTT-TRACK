@@ -32,7 +32,7 @@ if "open_movie_id" not in st.session_state:
 
 
 # =========================================================
-# GLOBAL CSS
+# GLOBAL CSS — UI ONLY
 # =========================================================
 
 st.markdown(
@@ -40,35 +40,59 @@ st.markdown(
     <style>
 
     /* =====================================================
-       GLOBAL
+       REELROUTE DASHBOARD THEME
+       ===================================================== */
+
+    :root {
+        --bg: #11151d;
+        --panel: #191d25;
+        --panel-light: #20252e;
+        --border: #303641;
+
+        --text: #f4f6f8;
+        --muted: #858d9c;
+
+        --cyan: #20d7d7;
+        --blue: #3c91ff;
+        --pink: #ff4fa3;
+        --purple: #874dff;
+    }
+
+
+    /* =====================================================
+       MAIN APP BACKGROUND
        ===================================================== */
 
     .stApp {
         background:
             radial-gradient(
-                circle at 12% 8%,
-                rgba(118, 76, 255, .16),
+                circle at 8% 0%,
+                rgba(60, 145, 255, 0.08),
                 transparent 30%
             ),
             radial-gradient(
-                circle at 88% 18%,
-                rgba(0, 201, 255, .10),
+                circle at 95% 15%,
+                rgba(255, 79, 163, 0.06),
                 transparent 28%
             ),
-            linear-gradient(
-                135deg,
-                #05060a 0%,
-                #090b12 48%,
-                #07080d 100%
-            );
+            #11151d !important;
 
-        color: #f7f8fb;
+        color: var(--text);
+    }
+
+
+    .main {
+        background: transparent !important;
     }
 
 
     .block-container {
-        max-width: 1500px;
-        padding: 30px 42px 70px;
+        max-width: 1500px !important;
+
+        padding:
+            28px
+            38px
+            60px !important;
     }
 
 
@@ -78,172 +102,292 @@ st.markdown(
 
     [data-testid="stSidebar"] {
         background:
-            linear-gradient(
-                180deg,
-                #0b0d15 0%,
-                #080a10 55%,
-                #06070c 100%
-            );
+            #151920 !important;
 
         border-right:
-            1px solid rgba(135, 105, 255, .22);
+            1px solid
+            rgba(255,255,255,0.06);
 
         box-shadow:
-            8px 0 35px rgba(0, 0, 0, .25);
+            8px 0 30px
+            rgba(0,0,0,0.22);
     }
 
 
     [data-testid="stSidebar"] .block-container {
-        padding: 28px 18px;
+        padding:
+            24px 18px !important;
     }
 
 
     [data-testid="stSidebarNav"] {
-        display: none;
+        display: none !important;
     }
 
 
     /* =====================================================
-       SEARCH
+       SIDEBAR BRAND
+       ===================================================== */
+
+    [data-testid="stSidebar"] h2 {
+        color: #ffffff !important;
+
+        font-size: 22px !important;
+
+        font-weight: 850 !important;
+
+        letter-spacing: -0.5px;
+    }
+
+
+    [data-testid="stSidebar"] p {
+        color: #7f8795;
+    }
+
+
+    /* =====================================================
+       HERO / PAGE TITLE
+       ===================================================== */
+
+    .hero-title {
+        font-size: 46px;
+
+        font-weight: 850;
+
+        letter-spacing: -2px;
+
+        color: #ffffff;
+
+        line-height: 1.05;
+
+        margin-top: 5px;
+
+        margin-bottom: 5px;
+    }
+
+
+    .hero-text {
+        color: #858d9c;
+
+        font-size: 14px;
+
+        margin-bottom: 24px;
+    }
+
+
+    /* =====================================================
+       SEARCH PANEL
        ===================================================== */
 
     [data-testid="stForm"] {
         background:
-            linear-gradient(
-                135deg,
-                rgba(18, 21, 31, .96),
-                rgba(11, 14, 22, .96)
-            );
+            #191d25 !important;
 
         border:
-            1px solid rgba(126, 91, 255, .28);
+            1px solid
+            #303641 !important;
 
-        border-radius: 18px;
+        border-radius:
+            12px !important;
 
-        padding: 10px;
+        padding:
+            10px !important;
 
-        margin: 10px 0 30px;
-
-        box-shadow:
-            0 12px 35px rgba(0, 0, 0, .24);
-    }
-
-
-    [data-testid="stTextInput"] input {
-        background: #0f121b !important;
-
-        border:
-            1px solid #292d3b !important;
-
-        color: #ffffff !important;
-
-        border-radius: 12px !important;
-
-        min-height: 46px;
-    }
-
-
-    [data-testid="stTextInput"] input:focus {
-        border-color: #8b6cff !important;
+        margin:
+            10px 0 28px !important;
 
         box-shadow:
-            0 0 0 1px
-            rgba(139, 108, 255, .45) !important;
-    }
-
-
-    [data-testid="stFormSubmitButton"] button {
-        min-height: 46px;
-
-        border-radius: 12px;
-
-        background:
-            linear-gradient(
-                135deg,
-                #7658d9,
-                #9b62ff
-            );
-
-        border:
-            1px solid #a783ff;
-
-        color: white;
-
-        font-weight: 750;
-
-        box-shadow:
-            0 8px 22px
-            rgba(118, 88, 217, .28);
-    }
-
-
-    [data-testid="stFormSubmitButton"] button:hover {
-        background:
-            linear-gradient(
-                135deg,
-                #856ce5,
-                #aa73ff
-            );
+            0 10px 30px
+            rgba(0,0,0,0.20) !important;
     }
 
 
     /* =====================================================
-       POSTER BUTTON
+       SEARCH INPUT
        ===================================================== */
 
-    .poster-click-area button {
-        width: 100% !important;
+    [data-testid="stTextInput"] input {
+        background:
+            #11151d !important;
 
-        height: 100% !important;
-
-        min-height: 360px !important;
-
-        padding: 0 !important;
-
-        margin: 0 !important;
-
-        border-radius: 15px !important;
+        color:
+            #ffffff !important;
 
         border:
             1px solid
-            rgba(255, 255, 255, .08) !important;
+            #303641 !important;
+
+        border-radius:
+            9px !important;
+
+        min-height:
+            44px !important;
+
+        font-size:
+            13px !important;
+    }
+
+
+    [data-testid="stTextInput"] input::placeholder {
+        color:
+            #626b7a !important;
+    }
+
+
+    [data-testid="stTextInput"] input:focus {
+        border-color:
+            var(--cyan) !important;
+
+        box-shadow:
+            0 0 0 1px
+            rgba(32,215,215,0.20) !important;
+    }
+
+
+    /* =====================================================
+       SEARCH BUTTON
+       ===================================================== */
+
+    [data-testid="stFormSubmitButton"] button {
+        min-height:
+            44px !important;
+
+        border:
+            none !important;
+
+        border-radius:
+            9px !important;
 
         background:
-            transparent !important;
+            linear-gradient(
+                90deg,
+                #3c91ff,
+                #20d7d7
+            ) !important;
 
-        color: transparent !important;
+        color:
+            #ffffff !important;
 
-        font-size: 0 !important;
-
-        overflow: hidden !important;
+        font-weight:
+            750 !important;
 
         box-shadow:
-            0 10px 25px
-            rgba(0, 0, 0, .30);
+            0 7px 18px
+            rgba(32,215,215,0.12);
+    }
+
+
+    [data-testid="stFormSubmitButton"] button:hover {
+        filter:
+            brightness(1.08);
+
+        transform:
+            translateY(-1px);
+    }
+
+
+    /* =====================================================
+       SELECTBOX
+       ===================================================== */
+
+    [data-testid="stSelectbox"] > div > div {
+        background:
+            #11151d !important;
+
+        border:
+            1px solid
+            #303641 !important;
+
+        border-radius:
+            9px !important;
+
+        color:
+            #f4f6f8 !important;
+    }
+
+
+    /* =====================================================
+       SECTION HEADINGS
+       ===================================================== */
+
+    .section-header {
+        margin-top:
+            30px;
+
+        margin-bottom:
+            14px;
+
+        padding-bottom:
+            10px;
+
+        border-bottom:
+            1px solid
+            rgba(255,255,255,0.05);
+    }
+
+
+    .section-title {
+        color:
+            #f4f6f8;
+
+        font-size:
+            20px;
+
+        font-weight:
+            800;
+
+        letter-spacing:
+            -0.4px;
+    }
+
+
+    .section-subtitle {
+        color:
+            #707987;
+
+        font-size:
+            11px;
+
+        margin-top:
+            3px;
+    }
+
+
+    /* =====================================================
+       MOVIE / SERIES CARD
+       ===================================================== */
+
+    .movie-card {
+        background:
+            #191d25;
+
+        border:
+            1px solid
+            #303641;
+
+        border-radius:
+            12px;
+
+        padding:
+            7px;
 
         transition:
-            transform .22s ease,
-            box-shadow .22s ease,
-            border-color .22s ease;
+            transform 0.2s ease,
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
     }
 
 
-    .poster-click-area button:hover {
+    .movie-card:hover {
         transform:
-            translateY(-7px)
-            scale(1.015);
+            translateY(-5px);
 
         border-color:
-            rgba(151, 119, 255, .70) !important;
+            rgba(32,215,215,0.45);
 
         box-shadow:
-            0 18px 38px
-            rgba(71, 46, 150, .40);
-    }
-
-
-    .poster-click-area button p {
-        display: none !important;
+            0 14px 30px
+            rgba(0,0,0,0.32);
     }
 
 
@@ -252,220 +396,412 @@ st.markdown(
        ===================================================== */
 
     .poster-image {
-        width: 100%;
+        width:
+            100%;
 
-        aspect-ratio: 2 / 3;
+        aspect-ratio:
+            2 / 3;
 
-        object-fit: cover;
+        object-fit:
+            cover;
 
-        border-radius: 15px;
+        border-radius:
+            8px;
 
-        display: block;
+        display:
+            block;
 
         box-shadow:
-            0 10px 25px
-            rgba(0, 0, 0, .30);
+            0 8px 20px
+            rgba(0,0,0,0.28);
     }
 
 
     /* =====================================================
-       MOVIE / SERIES CARD
+       POSTER CLICK BUTTON
+       ===================================================== */
+
+    .poster-click-area button {
+        width:
+            100% !important;
+
+        min-height:
+            330px !important;
+
+        padding:
+            0 !important;
+
+        margin:
+            0 !important;
+
+        border-radius:
+            9px !important;
+
+        border:
+            1px solid
+            rgba(255,255,255,0.04) !important;
+
+        background:
+            transparent !important;
+
+        color:
+            transparent !important;
+
+        font-size:
+            0 !important;
+
+        overflow:
+            hidden !important;
+
+        transition:
+            transform 0.2s ease,
+            border-color 0.2s ease,
+            box-shadow 0.2s ease !important;
+    }
+
+
+    .poster-click-area button:hover {
+        transform:
+            translateY(-4px)
+            scale(1.01);
+
+        border-color:
+            rgba(32,215,215,0.55) !important;
+
+        box-shadow:
+            0 12px 28px
+            rgba(0,0,0,0.32);
+    }
+
+
+    .poster-click-area button p {
+        display:
+            none !important;
+    }
+
+
+    /* =====================================================
+       MOVIE TITLE
        ===================================================== */
 
     .movie-title {
-        font-size: 14px;
+        color:
+            #f1f3f6 !important;
 
-        font-weight: 750;
+        font-size:
+            13px !important;
 
-        margin-top: 9px;
+        font-weight:
+            700 !important;
 
-        color: #f3f4f8;
+        margin-top:
+            8px !important;
 
-        white-space: nowrap;
+        white-space:
+            nowrap;
 
-        overflow: hidden;
+        overflow:
+            hidden;
 
-        text-overflow: ellipsis;
+        text-overflow:
+            ellipsis;
     }
 
 
     .movie-meta {
-        color: #858da0;
+        color:
+            #737c8b !important;
 
-        font-size: 11px;
+        font-size:
+            10px !important;
 
-        margin-top: 4px;
+        margin-top:
+            3px !important;
 
-        margin-bottom: 18px;
+        margin-bottom:
+            16px !important;
     }
 
 
     /* =====================================================
-       DETAILS
+       CONTENT TYPE BADGE
        ===================================================== */
 
-    .details-title {
-        font-size: 52px;
+    .content-badge {
+        display:
+            inline-block;
 
-        font-weight: 850;
+        padding:
+            4px 8px;
 
-        letter-spacing: -2px;
-
-        line-height: 1;
-
-        margin-bottom: 12px;
+        border-radius:
+            5px;
 
         background:
-            linear-gradient(
-                90deg,
-                #ffffff 0%,
-                #cfc6ff 55%,
-                #8fe8ff 100%
-            );
-
-        -webkit-background-clip: text;
-
-        -webkit-text-fill-color: transparent;
-    }
-
-
-    .details-description {
-        color: #a3aabd;
-
-        line-height: 1.75;
-
-        font-size: 14px;
-    }
-
-
-    /* =====================================================
-       INFO BOXES
-       ===================================================== */
-
-    .info-box {
-        background:
-            linear-gradient(
-                145deg,
-                rgba(18, 21, 31, .98),
-                rgba(11, 14, 22, .98)
-            );
+            rgba(60,145,255,0.12);
 
         border:
             1px solid
-            rgba(139, 108, 255, .20);
+            rgba(60,145,255,0.22);
 
-        border-radius: 15px;
+        color:
+            #63a8ff;
 
-        padding: 15px;
+        font-size:
+            9px;
 
-        min-height: 82px;
+        font-weight:
+            800;
 
-        margin-bottom: 12px;
-
-        box-shadow:
-            0 8px 25px
-            rgba(0, 0, 0, .18);
-    }
-
-
-    .info-label {
-        color: #777f93;
-
-        font-size: 9px;
-
-        font-weight: 750;
-
-        text-transform: uppercase;
-
-        letter-spacing: 1px;
-    }
-
-
-    .info-value {
-        color: #f3f4f8;
-
-        font-size: 14px;
-
-        font-weight: 650;
-
-        margin-top: 7px;
+        letter-spacing:
+            0.5px;
     }
 
 
     /* =====================================================
-       OTT
-       ===================================================== */
-
-    .ott-card {
-        background:
-            linear-gradient(
-                135deg,
-                rgba(19, 22, 32, .98),
-                rgba(10, 13, 21, .98)
-            );
-
-        border:
-            1px solid
-            rgba(92, 207, 255, .16);
-
-        border-radius: 15px;
-
-        padding: 15px;
-
-        margin-bottom: 10px;
-
-        box-shadow:
-            0 8px 24px
-            rgba(0, 0, 0, .20);
-
-        transition:
-            transform .2s ease,
-            border-color .2s ease,
-            box-shadow .2s ease;
-    }
-
-
-    .ott-card:hover {
-        transform: translateY(-3px);
-
-        border-color:
-            rgba(92, 207, 255, .42);
-
-        box-shadow:
-            0 14px 30px
-            rgba(0, 0, 0, .30);
-    }
-
-
-    /* =====================================================
-       BROWSE
+       BROWSE CARDS
        ===================================================== */
 
     .browse-card {
         background:
-            linear-gradient(
-                145deg,
-                rgba(18, 21, 31, .98),
-                rgba(10, 13, 21, .98)
-            );
+            #191d25;
 
         border:
             1px solid
-            rgba(139, 108, 255, .18);
+            #303641;
 
-        border-radius: 14px;
+        border-radius:
+            11px;
 
-        padding: 17px;
+        padding:
+            18px;
 
-        text-align: center;
+        text-align:
+            center;
 
-        margin-bottom: 12px;
+        margin-bottom:
+            12px;
 
-        font-weight: 650;
+        color:
+            #e8ebef;
+
+        font-weight:
+            650;
+
+        transition:
+            transform 0.2s ease,
+            border-color 0.2s ease;
+    }
+
+
+    .browse-card:hover {
+        transform:
+            translateY(-3px);
+
+        border-color:
+            rgba(255,79,163,0.45);
+    }
+
+
+    /* =====================================================
+       LANGUAGE CARDS
+       ===================================================== */
+
+    .language-card {
+        background:
+            #191d25;
+
+        border:
+            1px solid
+            #303641;
+
+        border-radius:
+            9px;
+
+        padding:
+            13px;
+
+        text-align:
+            center;
+
+        color:
+            #dce1e7;
+
+        font-size:
+            12px;
+
+        transition:
+            transform 0.2s ease,
+            border-color 0.2s ease;
+    }
+
+
+    .language-card:hover {
+        transform:
+            translateY(-2px);
+
+        border-color:
+            rgba(135,77,255,0.55);
+    }
+
+
+    /* =====================================================
+       DETAILS PAGE
+       ===================================================== */
+
+    .details-panel {
+        background:
+            #191d25;
+
+        border:
+            1px solid
+            #303641;
+
+        border-radius:
+            14px;
+
+        padding:
+            24px;
 
         box-shadow:
-            0 8px 22px
-            rgba(0, 0, 0, .18);
+            0 15px 40px
+            rgba(0,0,0,0.22);
+    }
+
+
+    .details-title {
+        font-size:
+            44px;
+
+        font-weight:
+            850;
+
+        letter-spacing:
+            -1.5px;
+
+        line-height:
+            1.05;
+
+        color:
+            #ffffff;
+
+        margin-bottom:
+            12px;
+    }
+
+
+    .details-description {
+        color:
+            #929aaa;
+
+        line-height:
+            1.7;
+
+        font-size:
+            13px;
+    }
+
+
+    /* =====================================================
+       INFORMATION BOXES
+       ===================================================== */
+
+    .info-box {
+        background:
+            #20252e;
+
+        border:
+            1px solid
+            #303641;
+
+        border-radius:
+            9px;
+
+        padding:
+            14px;
+
+        min-height:
+            72px;
+
+        margin-bottom:
+            10px;
+    }
+
+
+    .info-label {
+        color:
+            #697281;
+
+        font-size:
+            9px;
+
+        font-weight:
+            800;
+
+        text-transform:
+            uppercase;
+
+        letter-spacing:
+            1px;
+    }
+
+
+    .info-value {
+        color:
+            #f0f2f5;
+
+        font-size:
+            13px;
+
+        font-weight:
+            650;
+
+        margin-top:
+            5px;
+    }
+
+
+    /* =====================================================
+       OTT CARDS
+       ===================================================== */
+
+    .ott-card {
+        display:
+            block;
+
+        background:
+            #20252e;
+
+        border:
+            1px solid
+            #343b47;
+
+        border-radius:
+            10px;
+
+        padding:
+            14px;
+
+        margin-bottom:
+            9px;
+
+        transition:
+            transform 0.18s ease,
+            border-color 0.18s ease,
+            box-shadow 0.18s ease;
+    }
+
+
+    .ott-card:hover {
+        transform:
+            translateY(-2px);
+
+        border-color:
+            var(--cyan);
+
+        box-shadow:
+            0 8px 20px
+            rgba(0,0,0,0.25);
     }
 
 
@@ -474,43 +810,67 @@ st.markdown(
        ===================================================== */
 
     .stButton > button {
-        border-radius: 11px !important;
+        border-radius:
+            8px !important;
 
         border:
             1px solid
-            rgba(139, 108, 255, .24) !important;
+            #343a45 !important;
 
         background:
-            rgba(18, 21, 31, .90) !important;
+            #1b2028 !important;
 
         color:
-            #f3f4f8 !important;
+            #e9ecf1 !important;
+
+        transition:
+            all 0.18s ease !important;
     }
 
 
     .stButton > button:hover {
         border-color:
-            rgba(139, 108, 255, .65) !important;
+            rgba(32,215,215,0.55) !important;
 
         background:
-            rgba(31, 34, 49, .95) !important;
+            #222832 !important;
     }
 
 
     /* =====================================================
-       DETAILS BACK BUTTON
+       BACK BUTTON
        ===================================================== */
 
     .details-back button {
         border:
             1px solid
-            rgba(139, 108, 255, .30) !important;
+            #343a45 !important;
 
         background:
-            rgba(18, 21, 31, .90) !important;
+            #1b2028 !important;
 
         color:
-            #f3f4f8 !important;
+            #e9ecf1 !important;
+    }
+
+
+    /* =====================================================
+       STREAMLIT METRICS
+       ===================================================== */
+
+    [data-testid="stMetric"] {
+        background:
+            #191d25;
+
+        border:
+            1px solid
+            #303641;
+
+        border-radius:
+            10px;
+
+        padding:
+            14px;
     }
 
 
@@ -520,7 +880,7 @@ st.markdown(
 
     hr {
         border-color:
-            rgba(139, 108, 255, .14) !important;
+            #2b3039 !important;
     }
 
 
@@ -531,7 +891,56 @@ st.markdown(
     h1,
     h2,
     h3 {
-        letter-spacing: -.5px;
+        color:
+            #f4f6f8 !important;
+
+        letter-spacing:
+            -0.5px;
+    }
+
+
+    /* =====================================================
+       CAPTIONS
+       ===================================================== */
+
+    .stCaption,
+    [data-testid="stCaptionContainer"] {
+        color:
+            #737c8b !important;
+    }
+
+
+    /* =====================================================
+       SCROLLBAR
+       ===================================================== */
+
+    ::-webkit-scrollbar {
+        width:
+            7px;
+
+        height:
+            7px;
+    }
+
+
+    ::-webkit-scrollbar-track {
+        background:
+            #11151d;
+    }
+
+
+    ::-webkit-scrollbar-thumb {
+        background:
+            #343b47;
+
+        border-radius:
+            10px;
+    }
+
+
+    ::-webkit-scrollbar-thumb:hover {
+        background:
+            #4c5665;
     }
 
 
@@ -542,15 +951,23 @@ st.markdown(
     @media(max-width: 900px) {
 
         .block-container {
-            padding: 18px;
+            padding:
+                18px !important;
+        }
+
+        .hero-title {
+            font-size:
+                36px;
         }
 
         .details-title {
-            font-size: 38px;
+            font-size:
+                34px;
         }
 
         .poster-click-area button {
-            min-height: 300px !important;
+            min-height:
+                300px !important;
         }
 
     }
