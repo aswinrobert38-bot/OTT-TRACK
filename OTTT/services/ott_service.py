@@ -1,12 +1,61 @@
-"""OTT availability adapter.
+"""OTT availability service."""
 
-For the current build, TMDB's watch-provider endpoint is used for India.
-It is intentionally treated as availability data, not as proof of an OTT
-release date. Dates remain TBD unless a verified date source is added later.
-"""
-
-from services.tmdb_service import build_watch_data
+from services.tmdb_service import (
+    get_watch_providers,
+    get_tv_watch_providers
+)
 
 
-def get_india_availability(movie_id: int):
-    return build_watch_data(movie_id)
+def get_india_availability(
+    content_id,
+    content_type="movie"
+):
+
+    if content_type == "tv":
+
+        data = get_tv_watch_providers(
+            content_id
+        )
+
+    else:
+
+        data = get_watch_providers(
+            content_id
+        )
+
+    india = data.get(
+        "results",
+        {}
+    ).get(
+        "IN",
+        {}
+    )
+
+    return {
+        "link": india.get("link"),
+
+        "flatrate": india.get(
+            "flatrate",
+            []
+        ),
+
+        "free": india.get(
+            "free",
+            []
+        ),
+
+        "ads": india.get(
+            "ads",
+            []
+        ),
+
+        "rent": india.get(
+            "rent",
+            []
+        ),
+
+        "buy": india.get(
+            "buy",
+            []
+        )
+    }
