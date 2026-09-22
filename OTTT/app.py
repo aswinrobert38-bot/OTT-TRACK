@@ -1004,24 +1004,7 @@ with st.sidebar:
     # TMDB CONNECTION STATUS
     # -----------------------------------------------------
 
-    try:
 
-        token = get_token()
-
-        if token:
-            st.success("TMDB CONNECTED")
-        else:
-            st.error("TMDB TOKEN MISSING")
-
-    except Exception:
-
-        st.error("TMDB TOKEN MISSING")
-
-        st.caption(
-            "Add TMDB_API_KEY to your .env file."
-        )
-
-    st.divider()
 
     st.caption("ReelRoute")
 
