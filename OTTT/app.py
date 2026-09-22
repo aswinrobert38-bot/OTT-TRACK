@@ -21,6 +21,17 @@ st.set_page_config(
 
 
 # =========================================================
+# SESSION STATE
+# =========================================================
+
+if "open_content" not in st.session_state:
+    st.session_state.open_content = None
+
+if "open_movie_id" not in st.session_state:
+    st.session_state.open_movie_id = None
+
+
+# =========================================================
 # GLOBAL CSS
 # =========================================================
 
@@ -54,6 +65,7 @@ st.markdown(
         color: #f7f8fb;
     }
 
+
     .block-container {
         max-width: 1500px;
         padding: 30px 42px 70px;
@@ -80,9 +92,11 @@ st.markdown(
             8px 0 35px rgba(0, 0, 0, .25);
     }
 
+
     [data-testid="stSidebar"] .block-container {
         padding: 28px 18px;
     }
+
 
     [data-testid="stSidebarNav"] {
         display: none;
@@ -114,6 +128,7 @@ st.markdown(
             0 12px 35px rgba(0, 0, 0, .24);
     }
 
+
     [data-testid="stTextInput"] input {
         background: #0f121b !important;
 
@@ -127,6 +142,7 @@ st.markdown(
         min-height: 46px;
     }
 
+
     [data-testid="stTextInput"] input:focus {
         border-color: #8b6cff !important;
 
@@ -134,6 +150,7 @@ st.markdown(
             0 0 0 1px
             rgba(139, 108, 255, .45) !important;
     }
+
 
     [data-testid="stFormSubmitButton"] button {
         min-height: 46px;
@@ -159,6 +176,7 @@ st.markdown(
             rgba(118, 88, 217, .28);
     }
 
+
     [data-testid="stFormSubmitButton"] button:hover {
         background:
             linear-gradient(
@@ -170,7 +188,7 @@ st.markdown(
 
 
     /* =====================================================
-       MOVIE POSTER BUTTON
+       POSTER BUTTON
        ===================================================== */
 
     .poster-click-area button {
@@ -209,6 +227,7 @@ st.markdown(
             border-color .22s ease;
     }
 
+
     .poster-click-area button:hover {
         transform:
             translateY(-7px)
@@ -222,13 +241,14 @@ st.markdown(
             rgba(71, 46, 150, .40);
     }
 
+
     .poster-click-area button p {
         display: none !important;
     }
 
 
     /* =====================================================
-       POSTER IMAGE
+       POSTER
        ===================================================== */
 
     .poster-image {
@@ -249,7 +269,7 @@ st.markdown(
 
 
     /* =====================================================
-       MOVIE TITLE
+       MOVIE / SERIES CARD
        ===================================================== */
 
     .movie-title {
@@ -267,6 +287,7 @@ st.markdown(
 
         text-overflow: ellipsis;
     }
+
 
     .movie-meta {
         color: #858da0;
@@ -307,6 +328,7 @@ st.markdown(
         -webkit-text-fill-color: transparent;
     }
 
+
     .details-description {
         color: #a3aabd;
 
@@ -345,6 +367,7 @@ st.markdown(
             rgba(0, 0, 0, .18);
     }
 
+
     .info-label {
         color: #777f93;
 
@@ -356,6 +379,7 @@ st.markdown(
 
         letter-spacing: 1px;
     }
+
 
     .info-value {
         color: #f3f4f8;
@@ -393,6 +417,23 @@ st.markdown(
         box-shadow:
             0 8px 24px
             rgba(0, 0, 0, .20);
+
+        transition:
+            transform .2s ease,
+            border-color .2s ease,
+            box-shadow .2s ease;
+    }
+
+
+    .ott-card:hover {
+        transform: translateY(-3px);
+
+        border-color:
+            rgba(92, 207, 255, .42);
+
+        box-shadow:
+            0 14px 30px
+            rgba(0, 0, 0, .30);
     }
 
 
@@ -447,6 +488,32 @@ st.markdown(
     }
 
 
+    .stButton > button:hover {
+        border-color:
+            rgba(139, 108, 255, .65) !important;
+
+        background:
+            rgba(31, 34, 49, .95) !important;
+    }
+
+
+    /* =====================================================
+       DETAILS BACK BUTTON
+       ===================================================== */
+
+    .details-back button {
+        border:
+            1px solid
+            rgba(139, 108, 255, .30) !important;
+
+        background:
+            rgba(18, 21, 31, .90) !important;
+
+        color:
+            #f3f4f8 !important;
+    }
+
+
     /* =====================================================
        DIVIDERS
        ===================================================== */
@@ -465,20 +532,6 @@ st.markdown(
     h2,
     h3 {
         letter-spacing: -.5px;
-    }
-
-
-    /* =====================================================
-       DIALOG
-       ===================================================== */
-
-    [data-testid="stDialog"] {
-        background:
-            linear-gradient(
-                145deg,
-                #0c0f17,
-                #080a10
-            ) !important;
     }
 
 
@@ -509,19 +562,6 @@ st.markdown(
 
 
 # =========================================================
-# MOVIE DETAILS DIALOG
-# =========================================================
-
-@st.dialog(
-    "Movie Details",
-    width="large"
-)
-def open_movie_details(movie_id):
-
-    render_movie_details(movie_id)
-
-
-# =========================================================
 # SIDEBAR
 # =========================================================
 
@@ -536,19 +576,29 @@ with st.sidebar:
     st.markdown("### About")
 
     st.caption(
-        "Search movies, explore complete movie information "
-        "and check India-specific OTT availability."
+        "Search movies and web series, explore complete "
+        "content information and check India-specific "
+        "OTT availability."
     )
 
     st.divider()
 
-    if get_token():
+    # -----------------------------------------------------
+    # TMDB CONNECTION STATUS
+    # -----------------------------------------------------
 
-        st.success("DB CONNECTED")
+    try:
 
-    else:
+        token = get_token()
 
-        st.error("TMDB token missing")
+        if token:
+            st.success("TMDB CONNECTED")
+        else:
+            st.error("TMDB TOKEN MISSING")
+
+    except Exception:
+
+        st.error("TMDB TOKEN MISSING")
 
         st.caption(
             "Add TMDB_API_KEY to your .env file."
@@ -564,23 +614,51 @@ with st.sidebar:
 
 
 # =========================================================
-# HOME
+# ROUTING
 # =========================================================
 
-render_home()
+selected_content = st.session_state.get(
+    "open_content"
+)
 
 
 # =========================================================
-# OPEN SELECTED MOVIE
+# CONTENT DETAILS PAGE
 # =========================================================
 
-if (
-    "open_movie_id" in st.session_state
-    and st.session_state.open_movie_id is not None
-):
+if selected_content:
 
-    movie_id = st.session_state.open_movie_id
+    content_id = selected_content.get("id")
 
-    st.session_state.open_movie_id = None
+    content_type = selected_content.get(
+        "type",
+        "movie"
+    )
 
-    open_movie_details(movie_id)
+    if content_id:
+
+        render_movie_details(
+            content_id,
+            content_type
+        )
+
+    else:
+
+        st.error("Unable to open this content.")
+
+        if st.button("← Back to Home"):
+
+            st.session_state.open_content = None
+
+            st.session_state.open_movie_id = None
+
+            st.rerun()
+
+
+# =========================================================
+# HOME PAGE
+# =========================================================
+
+else:
+
+    render_home()
