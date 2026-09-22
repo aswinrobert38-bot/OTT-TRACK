@@ -13,6 +13,10 @@ class TMDBError(Exception):
     pass
 
 
+# =========================================================
+# TOKEN
+# =========================================================
+
 def get_token():
 
     token = None
@@ -33,6 +37,10 @@ def get_token():
     return str(token).strip()
 
 
+# =========================================================
+# HEADERS
+# =========================================================
+
 def get_headers():
 
     return {
@@ -41,11 +49,16 @@ def get_headers():
     }
 
 
+# =========================================================
+# REQUEST
+# =========================================================
+
 def _request(endpoint, params=None):
 
     url = TMDB_BASE_URL + endpoint
 
     try:
+
         response = requests.get(
             url,
             headers=get_headers(),
@@ -56,20 +69,26 @@ def _request(endpoint, params=None):
     except requests.RequestException as error:
 
         raise TMDBError(
-            "Unable to connect to TMDB: " + str(error)
+            "Unable to connect to TMDB: "
+            + str(error)
         )
 
     if response.status_code != 200:
 
         try:
+
             message = response.json().get(
                 "status_message",
                 "TMDB request failed"
             )
+
         except Exception:
+
             message = "TMDB request failed"
 
-        raise TMDBError(str(message))
+        raise TMDBError(
+            str(message)
+        )
 
     return response.json()
 
@@ -84,15 +103,17 @@ def normalize_movie(movie):
     movie["backdrop_url"] = None
 
     if movie.get("poster_path"):
+
         movie["poster_url"] = (
-            IMAGE_BASE_URL +
-            movie["poster_path"]
+            IMAGE_BASE_URL
+            + movie["poster_path"]
         )
 
     if movie.get("backdrop_path"):
+
         movie["backdrop_url"] = (
-            BACKDROP_BASE_URL +
-            movie["backdrop_path"]
+            BACKDROP_BASE_URL
+            + movie["backdrop_path"]
         )
 
     movie["rating"] = movie.get(
@@ -106,7 +127,7 @@ def normalize_movie(movie):
 
 
 # =========================================================
-# TV / WEB SERIES NORMALIZATION
+# TV NORMALIZATION
 # =========================================================
 
 def normalize_tv(show):
@@ -115,15 +136,17 @@ def normalize_tv(show):
     show["backdrop_url"] = None
 
     if show.get("poster_path"):
+
         show["poster_url"] = (
-            IMAGE_BASE_URL +
-            show["poster_path"]
+            IMAGE_BASE_URL
+            + show["poster_path"]
         )
 
     if show.get("backdrop_path"):
+
         show["backdrop_url"] = (
-            BACKDROP_BASE_URL +
-            show["backdrop_path"]
+            BACKDROP_BASE_URL
+            + show["backdrop_path"]
         )
 
     show["rating"] = show.get(
@@ -167,14 +190,17 @@ def search_movies(
 
     data["results"] = [
         normalize_movie(movie)
-        for movie in data.get("results", [])
+        for movie in data.get(
+            "results",
+            []
+        )
     ]
 
     return data
 
 
 # =========================================================
-# TV SEARCH
+# WEB SERIES SEARCH
 # =========================================================
 
 def search_tv(
@@ -200,14 +226,17 @@ def search_tv(
 
     data["results"] = [
         normalize_tv(show)
-        for show in data.get("results", [])
+        for show in data.get(
+            "results",
+            []
+        )
     ]
 
     return data
 
 
 # =========================================================
-# MOVIES + TV TOGETHER
+# MOVIES + TV
 # =========================================================
 
 def search_multi(
@@ -227,21 +256,22 @@ def search_multi(
 
     results = []
 
-    for item in data.get("results", []):
+    for item in data.get(
+        "results",
+        []
+    ):
 
-        media_type = item.get("media_type")
+        media_type = item.get(
+            "media_type"
+        )
 
         if media_type == "movie":
-
-            item["content_type"] = "movie"
 
             results.append(
                 normalize_movie(item)
             )
 
         elif media_type == "tv":
-
-            item["content_type"] = "tv"
 
             results.append(
                 normalize_tv(item)
@@ -253,7 +283,7 @@ def search_multi(
 
 
 # =========================================================
-# HOME MOVIE DATA
+# MOVIE HOME DATA
 # =========================================================
 
 def get_now_playing(page=1):
@@ -268,7 +298,10 @@ def get_now_playing(page=1):
 
     data["results"] = [
         normalize_movie(movie)
-        for movie in data.get("results", [])
+        for movie in data.get(
+            "results",
+            []
+        )
     ]
 
     return data
@@ -286,7 +319,10 @@ def get_popular(page=1):
 
     data["results"] = [
         normalize_movie(movie)
-        for movie in data.get("results", [])
+        for movie in data.get(
+            "results",
+            []
+        )
     ]
 
     return data
@@ -300,7 +336,10 @@ def get_trending():
 
     data["results"] = [
         normalize_movie(movie)
-        for movie in data.get("results", [])
+        for movie in data.get(
+            "results",
+            []
+        )
     ]
 
     return data
@@ -318,7 +357,91 @@ def get_upcoming(page=1):
 
     data["results"] = [
         normalize_movie(movie)
-        for movie in data.get("results", [])
+        for movie in data.get(
+            "results",
+            []
+        )
+    ]
+
+    return data
+
+
+# =========================================================
+# WEB SERIES HOME DATA
+# =========================================================
+
+def get_popular_tv(page=1):
+
+    data = _request(
+        "/tv/popular",
+        {
+            "page": page
+        }
+    )
+
+    data["results"] = [
+        normalize_tv(show)
+        for show in data.get(
+            "results",
+            []
+        )
+    ]
+
+    return data
+
+
+def get_trending_tv():
+
+    data = _request(
+        "/trending/tv/week"
+    )
+
+    data["results"] = [
+        normalize_tv(show)
+        for show in data.get(
+            "results",
+            []
+        )
+    ]
+
+    return data
+
+
+def get_airing_today_tv(page=1):
+
+    data = _request(
+        "/tv/airing_today",
+        {
+            "page": page
+        }
+    )
+
+    data["results"] = [
+        normalize_tv(show)
+        for show in data.get(
+            "results",
+            []
+        )
+    ]
+
+    return data
+
+
+def get_on_the_air_tv(page=1):
+
+    data = _request(
+        "/tv/on_the_air",
+        {
+            "page": page
+        }
+    )
+
+    data["results"] = [
+        normalize_tv(show)
+        for show in data.get(
+            "results",
+            []
+        )
     ]
 
     return data
@@ -342,20 +465,7 @@ def get_movie_details(movie_id):
 
 
 # =========================================================
-# MOVIE OTT PROVIDERS
-# =========================================================
-
-def get_watch_providers(movie_id):
-
-    return _request(
-        "/movie/" +
-        str(movie_id) +
-        "/watch/providers"
-    )
-
-
-# =========================================================
-# TV / WEB SERIES DETAILS
+# TV DETAILS
 # =========================================================
 
 def get_tv_details(tv_id):
@@ -372,23 +482,39 @@ def get_tv_details(tv_id):
 
 
 # =========================================================
-# TV / WEB SERIES OTT PROVIDERS
+# MOVIE OTT
+# =========================================================
+
+def get_watch_providers(movie_id):
+
+    return _request(
+        "/movie/"
+        + str(movie_id)
+        + "/watch/providers"
+    )
+
+
+# =========================================================
+# TV OTT
 # =========================================================
 
 def get_tv_watch_providers(tv_id):
 
     return _request(
-        "/tv/" +
-        str(tv_id) +
-        "/watch/providers"
+        "/tv/"
+        + str(tv_id)
+        + "/watch/providers"
     )
 
 
 # =========================================================
-# OTT WATCH DATA
+# WATCH DATA
 # =========================================================
 
-def build_watch_data(content_id, content_type="movie"):
+def build_watch_data(
+    content_id,
+    content_type="movie"
+):
 
     if content_type == "tv":
 
@@ -412,9 +538,29 @@ def build_watch_data(content_id, content_type="movie"):
 
     return {
         "link": india.get("link"),
-        "flatrate": india.get("flatrate", []),
-        "free": india.get("free", []),
-        "ads": india.get("ads", []),
-        "rent": india.get("rent", []),
-        "buy": india.get("buy", [])
+
+        "flatrate": india.get(
+            "flatrate",
+            []
+        ),
+
+        "free": india.get(
+            "free",
+            []
+        ),
+
+        "ads": india.get(
+            "ads",
+            []
+        ),
+
+        "rent": india.get(
+            "rent",
+            []
+        ),
+
+        "buy": india.get(
+            "buy",
+            []
+        )
     }
