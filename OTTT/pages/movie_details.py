@@ -1,271 +1,822 @@
+import html
+from urllib.parse import quote_plus
+
 import streamlit as st
 
 from services.tmdb_service import (
     TMDBError,
     get_movie_details,
-    get_watch_providers
+    get_tv_details,
+    get_watch_providers,
+    get_tv_watch_providers,
 )
 
 
-IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
-BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w1280"
+# =========================================================
+# BASIC HELPERS
+# =========================================================
 
+def get_languages(item):
 
-def get_movie_languages(movie):
-    languages = movie.get("spoken_languages", [])
-
+    languages = item.get("spoken_languages", [])
     names = []
 
     for language in languages:
-        name = language.get("english_name") or language.get("name")
+
+        name = (
+            language.get("english_name")
+            or language.get("name")
+        )
 
         if name and name not in names:
             names.append(name)
 
-    return names
-
-
-def get_directors(movie):
-    credits = movie.get("credits", {})
-    crew = credits.get("crew", [])
-
-    directors = []
-
-    for person in crew:
-        if person.get("job") == "Director":
-            name = person.get("name")
-
-            if name and name not in directors:
-                directors.append(name)
-
-    return directors
-
-
-def get_cast(movie):
-    credits = movie.get("credits", {})
-    cast = credits.get("cast", [])
-
-    names = []
-
-    for person in cast[:10]:
-        name = person.get("name")
-
-        if name:
-            names.append(name)
+    if not names and item.get("original_language"):
+        names.append(
+            str(item.get("original_language")).upper()
+        )
 
     return names
 
 
-def get_provider_type(provider_type):
-    provider_types = {
+def get_cast(item):
+
+    cast = item.get(
+        "credits",
+        {}
+    ).get(
+        "cast",
+        []
+    )
+
+    return [
+        person.get("name")
+        for person in cast[:10]
+        if person.get("name")
+    ]
+
+
+def get_directors(item):
+
+    crew = item.get(
+        "credits",
+        {}
+    ).get(
+        "crew",
+        []
+    )
+
+    return list(
+        dict.fromkeys(
+            person.get("name")
+            for person in crew
+            if person.get("job") in (
+                "Director",
+                "Creator"
+            )
+            and person.get("name")
+        )
+    )
+
+
+# =========================================================
+# OTT CATEGORY
+# =========================================================
+
+def get_provider_type(value):
+
+    return {
         "flatrate": "Streaming",
         "free": "Free",
         "ads": "Free with Ads",
         "rent": "Rent",
-        "buy": "Buy"
-    }
-
-    return provider_types.get(
-        provider_type,
-        provider_type.title()
+        "buy": "Buy",
+    }.get(
+        value,
+        str(value).title()
     )
 
 
+# =========================================================
+# GET INDIA OTT PROVIDERS
+# =========================================================
+
 def get_india_providers(provider_data):
-    """
-    Get ONLY India (IN) watch providers.
-    """
 
-    results = provider_data.get("results", {})
-
-    india = results.get("IN", {})
+    india = provider_data.get(
+        "results",
+        {}
+    ).get(
+        "IN",
+        {}
+    )
 
     providers = []
 
-    provider_categories = [
-        ("flatrate", "Streaming"),
-        ("free", "Free"),
-        ("ads", "Free with Ads"),
-        ("rent", "Rent"),
-        ("buy", "Buy")
-    ]
+    for category in (
+        "flatrate",
+        "free",
+        "ads",
+        "rent",
+        "buy"
+    ):
 
-    for category, category_name in provider_categories:
+        for provider in india.get(
+            category,
+            []
+        ):
 
-        provider_list = india.get(category, [])
-
-        for provider in provider_list:
-
-            provider_id = provider.get("provider_id")
-            provider_name = provider.get(
-                "provider_name",
-                "Unknown"
+            logo = provider.get(
+                "logo_path"
             )
-
-            logo_path = provider.get("logo_path")
-
-            logo_url = None
-
-            if logo_path:
-                logo_url = (
-                    "https://image.tmdb.org/t/p/w92"
-                    + logo_path
-                )
 
             providers.append(
                 {
-                    "id": provider_id,
-                    "name": provider_name,
-                    "logo": logo_url,
-                    "type": category_name
+                    "id": provider.get(
+                        "provider_id"
+                    ),
+
+                    "name": provider.get(
+                        "provider_name",
+                        "Unknown"
+                    ),
+
+                    "logo": (
+                        "https://image.tmdb.org/t/p/w154"
+                        + logo
+                        if logo
+                        else None
+                    ),
+
+                    "type": get_provider_type(
+                        category
+                    ),
+
+                    "tmdb_link": india.get(
+                        "link"
+                    ),
                 }
             )
 
     return providers
 
 
-def render_provider(provider):
-    """
-    Display one India OTT provider
-    using native Streamlit components.
-    """
+# =========================================================
+# PROVIDER SEARCH URL
+# =========================================================
 
-    col1, col2, col3 = st.columns(
-        [0.8, 2.5, 1.2]
+def provider_search_url(
+    provider_name,
+    title
+):
+
+    query = quote_plus(
+        title.strip()
     )
 
-    with col1:
+    name = provider_name.lower()
 
-        if provider["logo"]:
+    # Netflix
+    if "netflix" in name:
 
-            st.image(
-                provider["logo"],
-                width=55
+        return (
+            "https://www.netflix.com/search?q="
+            + query
+        )
+
+    # Amazon Prime Video
+    if (
+        "amazon" in name
+        or "prime video" in name
+        or "amazon prime" in name
+    ):
+
+        return (
+            "https://www.primevideo.com/search/ref=atv_nb_sr?phrase="
+            + query
+        )
+
+    # YouTube
+    if "youtube" in name:
+
+        return (
+            "https://www.youtube.com/results?search_query="
+            + query
+        )
+
+    # Apple TV
+    if "apple tv" in name:
+
+        return (
+            "https://tv.apple.com/in/search?term="
+            + query
+        )
+
+    # JioHotstar
+    if (
+        "hotstar" in name
+        or "jiohotstar" in name
+        or "jio hotstar" in name
+    ):
+
+        return (
+            "https://www.hotstar.com/in/search?q="
+            + query
+        )
+
+    # Sony LIV
+    if "sony liv" in name:
+
+        return (
+            "https://www.sonyliv.com/search/"
+            + query
+        )
+
+    # ZEE5
+    if "zee5" in name:
+
+        return (
+            "https://www.zee5.com/search?q="
+            + query
+        )
+
+    # Aha
+    if "aha" in name:
+
+        return (
+            "https://www.aha.video/search/"
+            + query
+        )
+
+    # MX Player
+    if "mx player" in name:
+
+        return (
+            "https://www.mxplayer.in/search/"
+            + query
+        )
+
+    # Lionsgate Play
+    if "lionsgate" in name:
+
+        return (
+            "https://www.lionsgateplay.com/search?q="
+            + query
+        )
+
+    # Discovery+
+    if "discovery" in name:
+
+        return (
+            "https://www.discoveryplus.in/search?q="
+            + query
+        )
+
+    # Crunchyroll
+    if "crunchyroll" in name:
+
+        return (
+            "https://www.crunchyroll.com/search?q="
+            + query
+        )
+
+    # Sun NXT
+    if "sun nxt" in name:
+
+        return (
+            "https://www.sunnxt.com/search/"
+            + query
+        )
+
+    # ManoramaMAX
+    if "manorama" in name:
+
+        return (
+            "https://www.manoramamax.com/search/"
+            + query
+        )
+
+    # Fallback
+    return None
+
+
+# =========================================================
+# OTT CARD
+# =========================================================
+
+def render_provider_card(
+    provider,
+    title
+):
+
+    name = provider.get(
+        "name",
+        "OTT Platform"
+    )
+
+    logo = provider.get(
+        "logo"
+    )
+
+    provider_type = provider.get(
+        "type",
+        "Streaming"
+    )
+
+    url = provider_search_url(
+        name,
+        title
+    )
+
+    if not url:
+        url = provider.get(
+            "tmdb_link"
+        )
+
+    # Custom HTML card
+    logo_html = ""
+
+    if logo:
+
+        logo_html = f"""
+        <img
+            src="{html.escape(logo)}"
+            class="ott-logo"
+        >
+        """
+
+    else:
+
+        logo_html = """
+        <div class="ott-logo-placeholder">
+            ▶
+        </div>
+        """
+
+    if url:
+
+        card_html = f"""
+        <a
+            href="{html.escape(url)}"
+            target="_blank"
+            class="ott-card"
+        >
+
+            <div class="ott-icon-area">
+                {logo_html}
+            </div>
+
+            <div class="ott-info">
+
+                <div class="ott-name">
+                    {html.escape(name)}
+                </div>
+
+                <div class="ott-type">
+                    {html.escape(provider_type)}
+                </div>
+
+            </div>
+
+            <div class="ott-arrow">
+                ↗
+            </div>
+
+        </a>
+        """
+
+    else:
+
+        card_html = f"""
+        <div class="ott-card disabled">
+
+            <div class="ott-icon-area">
+                {logo_html}
+            </div>
+
+            <div class="ott-info">
+
+                <div class="ott-name">
+                    {html.escape(name)}
+                </div>
+
+                <div class="ott-type">
+                    {html.escape(provider_type)}
+                </div>
+
+            </div>
+
+        </div>
+        """
+
+    st.markdown(
+        card_html,
+        unsafe_allow_html=True
+    )
+
+
+# =========================================================
+# OTT SECTION
+# =========================================================
+
+def render_watch_section(
+    item,
+    content_type
+):
+
+    st.divider()
+
+    st.markdown(
+        """
+        <div class="ott-section-title">
+            Where to Watch in India
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        """
+        <div class="ott-section-subtitle">
+            Available streaming platforms for this title
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    try:
+
+        if content_type == "tv":
+
+            data = get_tv_watch_providers(
+                item["id"]
             )
 
         else:
 
-            st.write("🎬")
+            data = get_watch_providers(
+                item["id"]
+            )
 
-    with col2:
-
-        st.markdown(
-            "**" + provider["name"] + "**"
+        providers = get_india_providers(
+            data
         )
 
-    with col3:
+        if not providers:
 
-        st.caption(
-            provider["type"]
+            st.info(
+                "No OTT availability found in India."
+            )
+
+            return
+
+        # Remove duplicates
+        unique = []
+        seen = set()
+
+        for provider in providers:
+
+            key = (
+                provider["id"],
+                provider["type"]
+            )
+
+            if key not in seen:
+
+                seen.add(key)
+                unique.append(provider)
+
+        title = (
+            item.get("title")
+            or item.get("name")
+            or ""
+        )
+
+        # Preferred order
+        categories = (
+            "Streaming",
+            "Free",
+            "Free with Ads",
+            "Rent",
+            "Buy"
+        )
+
+        for category in categories:
+
+            group = [
+                provider
+                for provider in unique
+                if provider["type"] == category
+            ]
+
+            if not group:
+                continue
+
+            st.markdown(
+                f"""
+                <div class="ott-category">
+                    {html.escape(category)}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            # 3 cards per row
+            for i in range(
+                0,
+                len(group),
+                3
+            ):
+
+                row = group[i:i + 3]
+
+                columns = st.columns(
+                    len(row)
+                )
+
+                for column, provider in zip(
+                    columns,
+                    row
+                ):
+
+                    with column:
+
+                        render_provider_card(
+                            provider,
+                            title
+                        )
+
+    except TMDBError as error:
+
+        st.error(
+            "Unable to load India OTT availability: "
+            + str(error)
         )
 
 
-def render_movie_details(movie_id):
+# =========================================================
+# MAIN DETAILS PAGE
+# =========================================================
 
-    # --------------------------------
+def render_movie_details(
+    content_id,
+    content_type="movie"
+):
+
+    # -----------------------------------------------------
+    # CUSTOM OTT CSS
+    # -----------------------------------------------------
+
+    st.markdown(
+        """
+        <style>
+
+        .ott-section-title {
+            font-size: 30px;
+            font-weight: 800;
+            margin-top: 10px;
+            margin-bottom: 4px;
+        }
+
+        .ott-section-subtitle {
+            font-size: 14px;
+            opacity: 0.65;
+            margin-bottom: 22px;
+        }
+
+        .ott-category {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 18px;
+            margin-bottom: 12px;
+        }
+
+        .ott-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            min-height: 86px;
+
+            padding: 12px 14px;
+
+            margin-bottom: 12px;
+
+            border-radius: 18px;
+
+            text-decoration: none !important;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255,255,255,0.09),
+                    rgba(255,255,255,0.025)
+                );
+
+            border:
+                1px solid
+                rgba(255,255,255,0.10);
+
+            transition:
+                transform 0.2s ease,
+                border-color 0.2s ease,
+                background 0.2s ease;
+
+            color: inherit !important;
+        }
+
+        .ott-card:hover {
+
+            transform:
+                translateY(-4px);
+
+            border-color:
+                rgba(255,255,255,0.28);
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255,255,255,0.14),
+                    rgba(255,255,255,0.045)
+                );
+
+        }
+
+        .ott-card.disabled {
+
+            opacity: 0.55;
+
+        }
+
+        .ott-icon-area {
+
+            width: 54px;
+            height: 54px;
+
+            min-width: 54px;
+
+            border-radius: 14px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            background:
+                rgba(255,255,255,0.08);
+
+            overflow: hidden;
+
+        }
+
+        .ott-logo {
+
+            width: 46px;
+            height: 46px;
+
+            object-fit: cover;
+
+            border-radius: 11px;
+
+        }
+
+        .ott-logo-placeholder {
+
+            font-size: 23px;
+
+        }
+
+        .ott-info {
+
+            flex: 1;
+
+            min-width: 0;
+
+        }
+
+        .ott-name {
+
+            font-size: 15px;
+
+            font-weight: 750;
+
+            white-space: nowrap;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+        }
+
+        .ott-type {
+
+            font-size: 12px;
+
+            opacity: 0.55;
+
+            margin-top: 3px;
+
+        }
+
+        .ott-arrow {
+
+            font-size: 22px;
+
+            opacity: 0.55;
+
+            padding-left: 5px;
+
+        }
+
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # -----------------------------------------------------
     # BACK BUTTON
-    # --------------------------------
+    # -----------------------------------------------------
 
     if st.button(
         "← Back",
-        key="back_movie"
+        key="back_content"
     ):
 
+        st.session_state.open_content = None
         st.session_state.open_movie_id = None
 
         st.rerun()
 
-
-    # --------------------------------
-    # LOAD MOVIE
-    # --------------------------------
+    # -----------------------------------------------------
+    # GET DETAILS
+    # -----------------------------------------------------
 
     try:
 
-        movie = get_movie_details(
-            movie_id
-        )
+        if content_type == "tv":
+
+            item = get_tv_details(
+                content_id
+            )
+
+        else:
+
+            item = get_movie_details(
+                content_id
+            )
 
     except TMDBError as error:
 
-        st.error(str(error))
+        st.error(
+            str(error)
+        )
 
         return
 
+    # -----------------------------------------------------
+    # BASIC DATA
+    # -----------------------------------------------------
 
-    # --------------------------------
-    # MOVIE DATA
-    # --------------------------------
-
-    title = movie.get(
-        "title",
-        "Untitled"
+    title = (
+        item.get("title")
+        or item.get("name")
+        or "Untitled"
     )
 
-    overview = movie.get(
-        "overview",
-        "No description available."
+    overview = (
+        item.get("overview")
+        or "No description available."
     )
 
-    poster = movie.get(
+    poster = item.get(
         "poster_url"
     )
 
-    backdrop = movie.get(
+    backdrop = item.get(
         "backdrop_url"
     )
 
-    rating = movie.get(
+    rating = item.get(
         "rating",
         0
     )
 
-    release_date = movie.get(
-        "release_date"
-    ) or "Not available"
+    genres = [
+        genre.get("name")
+        for genre in item.get(
+            "genres",
+            []
+        )
+        if genre.get("name")
+    ]
 
-    original_language = movie.get(
-        "original_language"
-    ) or "Not available"
-
-    runtime = movie.get(
-        "runtime"
+    languages = get_languages(
+        item
     )
 
-    genres = movie.get(
-        "genres",
-        []
-    )
-
-    genre_names = []
-
-    for genre in genres:
-
-        name = genre.get("name")
-
-        if name:
-            genre_names.append(name)
-
-    genre_text = ", ".join(
-        genre_names
-    )
-
-    movie_languages = get_movie_languages(
-        movie
-    )
-
-    directors = get_directors(
-        movie
-    )
-
-    cast_names = get_cast(
-        movie
-    )
-
-
-    # --------------------------------
+    # -----------------------------------------------------
     # BACKDROP
-    # --------------------------------
+    # -----------------------------------------------------
 
     if backdrop:
 
@@ -274,91 +825,14 @@ def render_movie_details(movie_id):
             use_container_width=True
         )
 
-
-    # --------------------------------
-    # TITLE
-    # --------------------------------
-
-    st.title(title)
-
-
-    # --------------------------------
-    # BASIC INFORMATION
-    # --------------------------------
-
-    col1, col2, col3, col4 = st.columns(4)
-
-
-    with col1:
-
-        try:
-
-            rating_value = str(
-                round(
-                    float(rating),
-                    1
-                )
-            )
-
-        except Exception:
-
-            rating_value = "N/A"
-
-        st.metric(
-            "Rating",
-            "★ " + rating_value
-        )
-
-
-    with col2:
-
-        st.metric(
-            "Release",
-            release_date
-        )
-
-
-    with col3:
-
-        st.metric(
-            "Original Language",
-            original_language.upper()
-        )
-
-
-    with col4:
-
-        if runtime:
-
-            runtime_text = (
-                str(runtime)
-                + " min"
-            )
-
-        else:
-
-            runtime_text = "N/A"
-
-        st.metric(
-            "Runtime",
-            runtime_text
-        )
-
-
-    # --------------------------------
-    # MAIN CONTENT
-    # --------------------------------
-
-    st.divider()
+    # -----------------------------------------------------
+    # MAIN DETAILS
+    # -----------------------------------------------------
 
     left, right = st.columns(
-        [1, 2]
+        [1, 2.2],
+        gap="large"
     )
-
-
-    # --------------------------------
-    # POSTER
-    # --------------------------------
 
     with left:
 
@@ -369,61 +843,131 @@ def render_movie_details(movie_id):
                 use_container_width=True
             )
 
-        else:
-
-            st.info(
-                "Poster not available."
-            )
-
-
-    # --------------------------------
-    # ABOUT
-    # --------------------------------
-
     with right:
 
-        st.subheader(
-            "About the Movie"
+        st.markdown(
+            '<div class="details-title">'
+            + html.escape(title)
+            + '</div>',
+            unsafe_allow_html=True
         )
 
-        st.write(
-            overview
+        st.markdown(
+            '<div class="details-description">'
+            + html.escape(overview)
+            + '</div>',
+            unsafe_allow_html=True
         )
 
+        st.write("")
 
-        if genre_text:
-
-            st.markdown(
-                "**Genre:** "
-                + genre_text
+        st.markdown(
+            "**★ Rating:** "
+            + str(
+                round(
+                    float(
+                        rating or 0
+                    ),
+                    1
+                )
             )
-
-
-        tagline = movie.get(
-            "tagline"
         )
 
-        if tagline:
-
-            st.markdown(
-                "**Tagline:** "
-                + tagline
+        st.markdown(
+            "**Genre:** "
+            + (
+                ", ".join(genres)
+                if genres
+                else "Not available"
             )
+        )
 
+        st.markdown(
+            "**Languages:** "
+            + (
+                ", ".join(languages)
+                if languages
+                else "Not available"
+            )
+        )
 
-        if movie_languages:
+        # -------------------------------------------------
+        # MOVIE INFORMATION
+        # -------------------------------------------------
+
+        if content_type == "movie":
 
             st.markdown(
-                "**Languages:** "
-                + ", ".join(
-                    movie_languages
+                "**Release date:** "
+                + str(
+                    item.get(
+                        "release_date"
+                    )
+                    or "Not available"
                 )
             )
 
+            if item.get("runtime"):
 
-    # --------------------------------
+                st.markdown(
+                    "**Runtime:** "
+                    + str(
+                        item.get(
+                            "runtime"
+                        )
+                    )
+                    + " min"
+                )
+
+        # -------------------------------------------------
+        # TV INFORMATION
+        # -------------------------------------------------
+
+        else:
+
+            st.markdown(
+                "**First air date:** "
+                + str(
+                    item.get(
+                        "first_air_date"
+                    )
+                    or "Not available"
+                )
+            )
+
+            st.markdown(
+                "**Status:** "
+                + str(
+                    item.get(
+                        "status"
+                    )
+                    or "Not available"
+                )
+            )
+
+            st.markdown(
+                "**Seasons:** "
+                + str(
+                    item.get(
+                        "number_of_seasons",
+                        "N/A"
+                    )
+                )
+            )
+
+            st.markdown(
+                "**Episodes:** "
+                + str(
+                    item.get(
+                        "number_of_episodes",
+                        "N/A"
+                    )
+                )
+            )
+
+    # -----------------------------------------------------
     # CAST & CREW
-    # --------------------------------
+    # -----------------------------------------------------
 
     st.divider()
 
@@ -431,51 +975,105 @@ def render_movie_details(movie_id):
         "Cast & Crew"
     )
 
+    people = get_directors(
+        item
+    )
 
-    if directors:
+    if people:
 
-        st.markdown(
-            "**Director:** "
-            + ", ".join(directors)
-        )
+        if content_type == "movie":
 
+            st.markdown(
+                "**Director:** "
+                + ", ".join(people)
+            )
 
-    if cast_names:
+        else:
+
+            st.markdown(
+                "**Creator:** "
+                + ", ".join(people)
+            )
+
+    cast = get_cast(
+        item
+    )
+
+    if cast:
 
         st.markdown(
             "**Cast:** "
-            + ", ".join(cast_names)
+            + ", ".join(cast)
         )
 
+    # -----------------------------------------------------
+    # TV SEASONS
+    # -----------------------------------------------------
 
-    # --------------------------------
+    if content_type == "tv":
+
+        seasons = item.get(
+            "seasons",
+            []
+        )
+
+        if seasons:
+
+            st.divider()
+
+            st.subheader(
+                "Seasons"
+            )
+
+            for season in seasons:
+
+                number = season.get(
+                    "season_number"
+                )
+
+                if number == 0:
+                    continue
+
+                name = (
+                    season.get("name")
+                    or "Season "
+                    + str(number)
+                )
+
+                episodes = season.get(
+                    "episode_count",
+                    0
+                )
+
+                air = season.get(
+                    "air_date"
+                ) or "N/A"
+
+                st.markdown(
+                    f"**{html.escape(name)}**"
+                    f"  •  {episodes} episodes"
+                    f"  •  {air}"
+                )
+
+    # -----------------------------------------------------
     # TRAILER
-    # --------------------------------
+    # -----------------------------------------------------
 
-    videos = movie.get(
-        "videos",
-        {}
-    )
-
-    video_results = videos.get(
-        "results",
-        []
-    )
-
-    trailer = None
-
-
-    for video in video_results:
-
-        if (
-            video.get("site") == "YouTube"
+    trailer = next(
+        (
+            video
+            for video in item.get(
+                "videos",
+                {}
+            ).get(
+                "results",
+                []
+            )
+            if video.get("site") == "YouTube"
             and video.get("type") == "Trailer"
-        ):
-
-            trailer = video
-
-            break
-
+        ),
+        None
+    )
 
     if trailer and trailer.get("key"):
 
@@ -485,228 +1083,23 @@ def render_movie_details(movie_id):
             "Trailer"
         )
 
-        youtube_url = (
-            "https://www.youtube.com/watch?v="
-            + trailer.get("key")
-        )
-
         st.video(
-            youtube_url
+            "https://www.youtube.com/watch?v="
+            + trailer["key"]
         )
 
+    # -----------------------------------------------------
+    # OTT AVAILABILITY
+    # -----------------------------------------------------
 
-    # --------------------------------
-    # INDIA OTT AVAILABILITY
-    # --------------------------------
-
-    st.divider()
-
-    st.subheader(
-        "Where to Watch in India"
+    render_watch_section(
+        item,
+        content_type
     )
 
-
-    try:
-
-        provider_data = get_watch_providers(
-            movie_id
-        )
-
-        india_providers = get_india_providers(
-            provider_data
-        )
-
-
-        # --------------------------------
-        # NO PROVIDERS
-        # --------------------------------
-
-        if not india_providers:
-
-            st.info(
-                "No OTT availability found in India."
-            )
-
-
-        else:
-
-            # Remove duplicate provider/category
-            # combinations while preserving order.
-
-            unique_providers = []
-
-            seen = set()
-
-
-            for provider in india_providers:
-
-                key = (
-                    provider["id"],
-                    provider["type"]
-                )
-
-                if key not in seen:
-
-                    seen.add(key)
-
-                    unique_providers.append(
-                        provider
-                    )
-
-
-            # --------------------------------
-            # STREAMING
-            # --------------------------------
-
-            streaming = [
-                provider
-                for provider in unique_providers
-                if provider["type"] == "Streaming"
-            ]
-
-
-            if streaming:
-
-                st.markdown(
-                    "### Streaming"
-                )
-
-                for provider in streaming:
-
-                    render_provider(
-                        provider
-                    )
-
-                    st.divider()
-
-
-            # --------------------------------
-            # FREE
-            # --------------------------------
-
-            free = [
-                provider
-                for provider in unique_providers
-                if provider["type"] == "Free"
-            ]
-
-
-            if free:
-
-                st.markdown(
-                    "### Free"
-                )
-
-                for provider in free:
-
-                    render_provider(
-                        provider
-                    )
-
-                    st.divider()
-
-
-            # --------------------------------
-            # FREE WITH ADS
-            # --------------------------------
-
-            ads = [
-                provider
-                for provider in unique_providers
-                if provider["type"] == "Free with Ads"
-            ]
-
-
-            if ads:
-
-                st.markdown(
-                    "### Free with Ads"
-                )
-
-                for provider in ads:
-
-                    render_provider(
-                        provider
-                    )
-
-                    st.divider()
-
-
-            # --------------------------------
-            # RENT
-            # --------------------------------
-
-            rent = [
-                provider
-                for provider in unique_providers
-                if provider["type"] == "Rent"
-            ]
-
-
-            if rent:
-
-                st.markdown(
-                    "### Rent"
-                )
-
-                for provider in rent:
-
-                    render_provider(
-                        provider
-                    )
-
-                    st.divider()
-
-
-            # --------------------------------
-            # BUY
-            # --------------------------------
-
-            buy = [
-                provider
-                for provider in unique_providers
-                if provider["type"] == "Buy"
-            ]
-
-
-            if buy:
-
-                st.markdown(
-                    "### Buy"
-                )
-
-                for provider in buy:
-
-                    render_provider(
-                        provider
-                    )
-
-                    st.divider()
-
-
-    except TMDBError as error:
-
-        st.error(
-            "Unable to load India OTT availability: "
-            + str(error)
-        )
-
-
-    # --------------------------------
-    # LANGUAGE NOTE
-    # --------------------------------
-
-    if movie_languages:
-
-        st.caption(
-            "Movie languages: "
-            + ", ".join(movie_languages)
-        )
-
-
-    # --------------------------------
-    # ATTRIBUTION
-    # --------------------------------
+    # -----------------------------------------------------
+    # FOOTER
+    # -----------------------------------------------------
 
     st.caption(
         "OTT availability data powered by JustWatch through TMDB."
