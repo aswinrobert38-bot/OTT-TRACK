@@ -17,25 +17,44 @@ from services.tmdb_service import (
 # =========================================================
 
 def get_languages(item):
-    languages = item.get("spoken_languages", [])
+
+    languages = item.get(
+        "spoken_languages",
+        []
+    )
+
     names = []
 
     for language in languages:
-        name = language.get("english_name") or language.get("name")
+
+        name = (
+            language.get("english_name")
+            or language.get("name")
+        )
 
         if name and name not in names:
             names.append(name)
 
     if not names and item.get("original_language"):
+
         names.append(
-            str(item.get("original_language")).upper()
+            str(
+                item.get("original_language")
+            ).upper()
         )
 
     return names
 
 
 def get_cast(item):
-    cast = item.get("credits", {}).get("cast", [])
+
+    cast = item.get(
+        "credits",
+        {}
+    ).get(
+        "cast",
+        []
+    )
 
     return [
         person.get("name")
@@ -45,35 +64,61 @@ def get_cast(item):
 
 
 def get_directors(item):
-    crew = item.get("credits", {}).get("crew", [])
+
+    crew = item.get(
+        "credits",
+        {}
+    ).get(
+        "crew",
+        []
+    )
 
     return list(
         dict.fromkeys(
             person.get("name")
             for person in crew
-            if person.get("job") in ("Director", "Creator")
+            if person.get("job")
+            in (
+                "Director",
+                "Creator"
+            )
             and person.get("name")
         )
     )
 
 
 # =========================================================
-# OTT HELPERS
+# OTT TYPE
 # =========================================================
 
-def get_provider_type(value):
+def get_provider_type(category):
 
     return {
-        "flatrate": "Streaming",
-        "free": "Free",
-        "ads": "Free with Ads",
-        "rent": "Rent",
-        "buy": "Buy",
+
+        "flatrate":
+            "Streaming",
+
+        "free":
+            "Free",
+
+        "ads":
+            "Free with Ads",
+
+        "rent":
+            "Rent",
+
+        "buy":
+            "Buy"
+
     }.get(
-        value,
-        str(value).title()
+        category,
+        str(category).title()
     )
 
+
+# =========================================================
+# GET INDIA PROVIDERS
+# =========================================================
 
 def get_india_providers(provider_data):
 
@@ -87,13 +132,15 @@ def get_india_providers(provider_data):
 
     providers = []
 
-    for category in (
+    categories = [
         "flatrate",
         "free",
         "ads",
         "rent",
         "buy"
-    ):
+    ]
+
+    for category in categories:
 
         for provider in india.get(
             category,
@@ -106,29 +153,34 @@ def get_india_providers(provider_data):
 
             providers.append(
                 {
-                    "id": provider.get(
-                        "provider_id"
-                    ),
+                    "id":
+                        provider.get(
+                            "provider_id"
+                        ),
 
-                    "name": provider.get(
-                        "provider_name",
-                        "Unknown"
-                    ),
+                    "name":
+                        provider.get(
+                            "provider_name",
+                            "Unknown"
+                        ),
 
-                    "logo": (
-                        "https://image.tmdb.org/t/p/w92"
-                        + logo
-                        if logo
-                        else None
-                    ),
+                    "logo":
+                        (
+                            "https://image.tmdb.org/t/p/w92"
+                            + logo
+                            if logo
+                            else None
+                        ),
 
-                    "type": get_provider_type(
-                        category
-                    ),
+                    "type":
+                        get_provider_type(
+                            category
+                        ),
 
-                    "tmdb_link": india.get(
-                        "link"
-                    )
+                    "tmdb_link":
+                        india.get(
+                            "link"
+                        )
                 }
             )
 
@@ -136,30 +188,39 @@ def get_india_providers(provider_data):
 
 
 # =========================================================
-# OTT SEARCH / REDIRECTION
+# PROVIDER TITLE SEARCH
 # =========================================================
 
-def provider_search_url(name, title):
+def provider_search_url(
+    provider_name,
+    title
+):
 
     query = quote_plus(
-        title
+        title.strip()
     )
 
-    provider = name.lower()
+    name = provider_name.lower()
 
-    # Netflix
-    if "netflix" in provider:
+    # -----------------------------------------------------
+    # NETFLIX
+    # -----------------------------------------------------
+
+    if "netflix" in name:
 
         return (
             "https://www.netflix.com/search?q="
             + query
         )
 
-    # Prime Video / Amazon
+    # -----------------------------------------------------
+    # PRIME VIDEO
+    # -----------------------------------------------------
+
     if (
-        "amazon" in provider
-        or "prime video" in provider
-        or "amazon prime" in provider
+        "prime video" in name
+        or "amazon prime" in name
+        or "amazon" in name
     ):
 
         return (
@@ -167,27 +228,14 @@ def provider_search_url(name, title):
             + query
         )
 
-    # YouTube
-    if "youtube" in provider:
+    # -----------------------------------------------------
+    # JIOHOTSTAR / HOTSTAR
+    # -----------------------------------------------------
 
-        return (
-            "https://www.youtube.com/results?search_query="
-            + query
-        )
-
-    # Apple TV
-    if "apple tv" in provider:
-
-        return (
-            "https://tv.apple.com/in/search?term="
-            + query
-        )
-
-    # JioHotstar
     if (
-        "hotstar" in provider
-        or "jiohotstar" in provider
-        or "jio hotstar" in provider
+        "jiohotstar" in name
+        or "jio hotstar" in name
+        or "hotstar" in name
     ):
 
         return (
@@ -195,86 +243,142 @@ def provider_search_url(name, title):
             + query
         )
 
-    # Sony LIV
-    if "sony liv" in provider:
+    # -----------------------------------------------------
+    # SONY LIV
+    # -----------------------------------------------------
+
+    if "sony liv" in name:
 
         return (
             "https://www.sonyliv.com/search/"
             + query
         )
 
+    # -----------------------------------------------------
     # ZEE5
-    if "zee5" in provider:
+    # -----------------------------------------------------
+
+    if "zee5" in name:
 
         return (
             "https://www.zee5.com/search?q="
             + query
         )
 
-    # Aha
-    if "aha" in provider:
+    # -----------------------------------------------------
+    # YOUTUBE
+    # -----------------------------------------------------
+
+    if "youtube" in name:
+
+        return (
+            "https://www.youtube.com/results?search_query="
+            + query
+        )
+
+    # -----------------------------------------------------
+    # APPLE TV
+    # -----------------------------------------------------
+
+    if "apple tv" in name:
+
+        return (
+            "https://tv.apple.com/in/search?term="
+            + query
+        )
+
+    # -----------------------------------------------------
+    # AHA
+    # -----------------------------------------------------
+
+    if name == "aha" or "aha " in name:
 
         return (
             "https://www.aha.video/search/"
             + query
         )
 
-    # MX Player
-    if "mx player" in provider:
+    # -----------------------------------------------------
+    # MX PLAYER
+    # -----------------------------------------------------
+
+    if "mx player" in name:
 
         return (
             "https://www.mxplayer.in/search/"
             + query
         )
 
-    # Lionsgate Play
-    if "lionsgate" in provider:
+    # -----------------------------------------------------
+    # LIONSGATE PLAY
+    # -----------------------------------------------------
+
+    if "lionsgate" in name:
 
         return (
             "https://www.lionsgateplay.com/search?q="
             + query
         )
 
-    # Discovery+
-    if "discovery" in provider:
+    # -----------------------------------------------------
+    # DISCOVERY+
+    # -----------------------------------------------------
+
+    if "discovery" in name:
 
         return (
             "https://www.discoveryplus.in/search?q="
             + query
         )
 
-    # Crunchyroll
-    if "crunchyroll" in provider:
+    # -----------------------------------------------------
+    # CRUNCHYROLL
+    # -----------------------------------------------------
+
+    if "crunchyroll" in name:
 
         return (
             "https://www.crunchyroll.com/search?q="
             + query
         )
 
-    # Sun NXT
-    if "sun nxt" in provider:
+    # -----------------------------------------------------
+    # SUN NXT
+    # -----------------------------------------------------
+
+    if "sun nxt" in name:
 
         return (
             "https://www.sunnxt.com/search/"
             + query
         )
 
-    # ManoramaMAX
-    if "manorama" in provider:
+    # -----------------------------------------------------
+    # MANORAMA MAX
+    # -----------------------------------------------------
+
+    if "manorama" in name:
 
         return (
             "https://www.manoramamax.com/search/"
             + query
         )
 
+    # -----------------------------------------------------
+    # DEFAULT
+    # -----------------------------------------------------
+
     return None
 
 
 # =========================================================
-# OTT CARD
+# CLICKABLE OTT CARD
 # =========================================================
 
-def render_provider(provider, title):
+def render_provider(
+    provider,
+    title
+):
 
     name = provider.get(
         "name",
@@ -290,21 +394,33 @@ def render_provider(provider, title):
         "Streaming"
     )
 
+    # -----------------------------------------------------
+    # GET TITLE SEARCH URL
+    # -----------------------------------------------------
+
     url = provider_search_url(
         name,
         title
     )
 
-    # Fallback to TMDB/JustWatch
+    # -----------------------------------------------------
+    # FALLBACK
+    # -----------------------------------------------------
+
     if not url:
+
         url = provider.get(
             "tmdb_link"
         )
 
     if not url:
+
         return
 
-    # Logo
+    # -----------------------------------------------------
+    # LOGO
+    # -----------------------------------------------------
+
     if logo:
 
         logo_html = f"""
@@ -317,13 +433,16 @@ def render_provider(provider, title):
     else:
 
         logo_html = """
-        <div class="ott-logo-placeholder">
+        <div class="ott-placeholder">
             ▶
         </div>
         """
 
-    # Complete card
-    card_html = f"""
+    # -----------------------------------------------------
+    # CLICKABLE CARD
+    # -----------------------------------------------------
+
+    card = f"""
     <a
         href="{html.escape(url)}"
         target="_blank"
@@ -331,11 +450,13 @@ def render_provider(provider, title):
         class="ott-card"
     >
 
-        <div class="ott-icon-area">
+        <div class="ott-logo-container">
+
             {logo_html}
+
         </div>
 
-        <div class="ott-info">
+        <div class="ott-details">
 
             <div class="ott-name">
                 {html.escape(name)}
@@ -347,91 +468,121 @@ def render_provider(provider, title):
 
         </div>
 
-        <div class="ott-arrow">
+        <div class="ott-open">
             ↗
         </div>
 
     </a>
     """
 
-    # IMPORTANT:
-    # Use st.html(), NOT st.markdown()
-    st.html(card_html)
+    # IMPORTANT
+    # st.html makes the entire card clickable.
+    st.html(card)
 
 
 # =========================================================
 # OTT SECTION
 # =========================================================
 
-def render_watch_section(item, content_type):
+def render_watch_section(
+    item,
+    content_type
+):
 
-    # -----------------------------------------------------
-    # OTT CSS
-    # -----------------------------------------------------
+    # =====================================================
+    # CSS
+    # =====================================================
 
     st.html(
         """
         <style>
 
         .ott-section-title {
+
             font-size: 30px;
+
             font-weight: 800;
+
             margin-top: 10px;
-            margin-bottom: 4px;
+
+            margin-bottom: 5px;
+
         }
+
 
         .ott-section-subtitle {
+
             font-size: 14px;
-            opacity: 0.65;
-            margin-bottom: 22px;
+
+            opacity: 0.60;
+
+            margin-bottom: 25px;
+
         }
+
 
         .ott-category {
+
             font-size: 18px;
-            font-weight: 700;
-            margin-top: 18px;
-            margin-bottom: 12px;
+
+            font-weight: 750;
+
+            margin-top: 20px;
+
+            margin-bottom: 14px;
+
         }
 
+
         .ott-card {
+
             display: flex;
+
             align-items: center;
 
-            gap: 12px;
-
-            min-height: 82px;
+            gap: 14px;
 
             width: 100%;
+
+            min-height: 82px;
 
             padding: 12px 14px;
 
             margin-bottom: 12px;
 
-            border-radius: 18px;
-
             box-sizing: border-box;
+
+            border-radius: 18px;
 
             text-decoration: none !important;
 
             color: inherit !important;
 
             background:
+
                 linear-gradient(
                     145deg,
-                    rgba(255,255,255,0.09),
+                    rgba(255,255,255,0.10),
                     rgba(255,255,255,0.025)
                 );
 
             border:
+
                 1px solid
                 rgba(255,255,255,0.10);
 
             transition:
-                transform 0.2s ease,
-                border-color 0.2s ease,
-                background 0.2s ease;
+
+                transform 0.20s ease,
+
+                border-color 0.20s ease,
+
+                background 0.20s ease,
+
+                box-shadow 0.20s ease;
 
         }
+
 
         .ott-card:hover {
 
@@ -439,26 +590,33 @@ def render_watch_section(item, content_type):
                 translateY(-4px);
 
             border-color:
-                rgba(255,255,255,0.30);
+                rgba(255,255,255,0.32);
 
             background:
+
                 linear-gradient(
                     145deg,
-                    rgba(255,255,255,0.15),
-                    rgba(255,255,255,0.05)
+                    rgba(255,255,255,0.16),
+                    rgba(255,255,255,0.045)
                 );
+
+            box-shadow:
+
+                0 12px 30px
+                rgba(0,0,0,0.22);
 
         }
 
-        .ott-icon-area {
 
-            width: 54px;
+        .ott-logo-container {
 
-            height: 54px;
+            width: 56px;
 
-            min-width: 54px;
+            height: 56px;
 
-            border-radius: 14px;
+            min-width: 56px;
+
+            border-radius: 15px;
 
             display: flex;
 
@@ -466,40 +624,44 @@ def render_watch_section(item, content_type):
 
             justify-content: center;
 
+            overflow: hidden;
+
             background:
                 rgba(255,255,255,0.08);
 
-            overflow: hidden;
-
         }
+
 
         .ott-logo {
 
-            width: 46px;
+            width: 48px;
 
-            height: 46px;
+            height: 48px;
 
             object-fit: cover;
 
-            border-radius: 11px;
+            border-radius: 12px;
 
             display: block;
 
         }
 
-        .ott-logo-placeholder {
 
-            font-size: 23px;
+        .ott-placeholder {
+
+            font-size: 22px;
 
         }
 
-        .ott-info {
+
+        .ott-details {
 
             flex: 1;
 
             min-width: 0;
 
         }
+
 
         .ott-name {
 
@@ -515,23 +677,36 @@ def render_watch_section(item, content_type):
 
         }
 
+
         .ott-type {
 
             font-size: 12px;
 
             opacity: 0.55;
 
-            margin-top: 3px;
+            margin-top: 4px;
 
         }
 
-        .ott-arrow {
 
-            font-size: 22px;
+        .ott-open {
 
-            opacity: 0.55;
+            font-size: 23px;
 
-            padding-left: 5px;
+            opacity: 0.60;
+
+            transition:
+                transform 0.20s ease;
+
+        }
+
+
+        .ott-card:hover .ott-open {
+
+            transform:
+                translate(3px,-3px);
+
+            opacity: 1;
 
         }
 
@@ -539,11 +714,9 @@ def render_watch_section(item, content_type):
         """
     )
 
-    # -----------------------------------------------------
-    # TITLE
-    # -----------------------------------------------------
-
-    st.divider()
+    # =====================================================
+    # HEADER
+    # =====================================================
 
     st.html(
         """
@@ -552,138 +725,149 @@ def render_watch_section(item, content_type):
         </div>
 
         <div class="ott-section-subtitle">
-            Available streaming platforms for this title
+            Click an OTT platform to find this title
         </div>
         """
     )
 
-    # -----------------------------------------------------
-    # GET PROVIDERS
-    # -----------------------------------------------------
+    # =====================================================
+    # GET OTT DATA
+    # =====================================================
 
     try:
 
         if content_type == "tv":
 
-            data = get_tv_watch_providers(
+            provider_data = get_tv_watch_providers(
                 item["id"]
             )
 
         else:
 
-            data = get_watch_providers(
+            provider_data = get_watch_providers(
                 item["id"]
             )
-
-        providers = get_india_providers(
-            data
-        )
-
-        if not providers:
-
-            st.info(
-                "No OTT availability found in India."
-            )
-
-            return
-
-        # -------------------------------------------------
-        # REMOVE DUPLICATES
-        # -------------------------------------------------
-
-        unique = []
-
-        seen = set()
-
-        for provider in providers:
-
-            key = (
-                provider["id"],
-                provider["type"]
-            )
-
-            if key not in seen:
-
-                seen.add(key)
-
-                unique.append(
-                    provider
-                )
-
-        title = (
-            item.get("title")
-            or item.get("name")
-            or ""
-        )
-
-        # -------------------------------------------------
-        # CATEGORIES
-        # -------------------------------------------------
-
-        categories = (
-            "Streaming",
-            "Free",
-            "Free with Ads",
-            "Rent",
-            "Buy"
-        )
-
-        for category in categories:
-
-            group = [
-                provider
-                for provider in unique
-                if provider["type"] == category
-            ]
-
-            if not group:
-                continue
-
-            st.html(
-                f"""
-                <div class="ott-category">
-                    {html.escape(category)}
-                </div>
-                """
-            )
-
-            # ---------------------------------------------
-            # 2 CARDS PER ROW
-            # ---------------------------------------------
-
-            for i in range(
-                0,
-                len(group),
-                2
-            ):
-
-                row = group[
-                    i:i + 2
-                ]
-
-                columns = st.columns(
-                    len(row),
-                    gap="medium"
-                )
-
-                for column, provider in zip(
-                    columns,
-                    row
-                ):
-
-                    with column:
-
-                        render_provider(
-                            provider,
-                            title
-                        )
 
     except TMDBError as error:
 
         st.error(
-            "Unable to load India OTT availability: "
+            "Unable to load OTT availability: "
             + str(error)
         )
+
+        return
+
+    # =====================================================
+    # PROVIDERS
+    # =====================================================
+
+    providers = get_india_providers(
+        provider_data
+    )
+
+    if not providers:
+
+        st.info(
+            "No OTT availability found in India."
+        )
+
+        return
+
+    # =====================================================
+    # REMOVE DUPLICATES
+    # =====================================================
+
+    unique = []
+
+    seen = set()
+
+    for provider in providers:
+
+        key = (
+            provider.get("id"),
+            provider.get("type")
+        )
+
+        if key not in seen:
+
+            seen.add(key)
+
+            unique.append(
+                provider
+            )
+
+    # =====================================================
+    # TITLE
+    # =====================================================
+
+    title = (
+        item.get("title")
+        or item.get("name")
+        or ""
+    )
+
+    # =====================================================
+    # CATEGORY ORDER
+    # =====================================================
+
+    categories = [
+        "Streaming",
+        "Free",
+        "Free with Ads",
+        "Rent",
+        "Buy"
+    ]
+
+    # =====================================================
+    # DISPLAY
+    # =====================================================
+
+    for category in categories:
+
+        group = [
+            provider
+            for provider in unique
+            if provider.get("type") == category
+        ]
+
+        if not group:
+            continue
+
+        st.html(
+            f"""
+            <div class="ott-category">
+                {html.escape(category)}
+            </div>
+            """
+        )
+
+        # Two cards per row
+        for i in range(
+            0,
+            len(group),
+            2
+        ):
+
+            row = group[
+                i:i + 2
+            ]
+
+            columns = st.columns(
+                len(row),
+                gap="medium"
+            )
+
+            for column, provider in zip(
+                columns,
+                row
+            ):
+
+                with column:
+
+                    render_provider(
+                        provider,
+                        title
+                    )
 
 
 # =========================================================
@@ -695,9 +879,9 @@ def render_movie_details(
     content_type="movie"
 ):
 
-    # -----------------------------------------------------
+    # =====================================================
     # BACK
-    # -----------------------------------------------------
+    # =====================================================
 
     if st.button(
         "← Back",
@@ -710,9 +894,9 @@ def render_movie_details(
 
         st.rerun()
 
-    # -----------------------------------------------------
-    # GET CONTENT
-    # -----------------------------------------------------
+    # =====================================================
+    # LOAD DETAILS
+    # =====================================================
 
     try:
 
@@ -736,9 +920,9 @@ def render_movie_details(
 
         return
 
-    # -----------------------------------------------------
-    # BASIC INFORMATION
-    # -----------------------------------------------------
+    # =====================================================
+    # DATA
+    # =====================================================
 
     title = (
         item.get("title")
@@ -777,9 +961,9 @@ def render_movie_details(
         item
     )
 
-    # -----------------------------------------------------
+    # =====================================================
     # BACKDROP
-    # -----------------------------------------------------
+    # =====================================================
 
     if backdrop:
 
@@ -788,9 +972,9 @@ def render_movie_details(
             use_container_width=True
         )
 
-    # -----------------------------------------------------
-    # MAIN DETAILS
-    # -----------------------------------------------------
+    # =====================================================
+    # DETAILS
+    # =====================================================
 
     left, right = st.columns(
         [1, 2.2],
@@ -929,7 +1113,7 @@ def render_movie_details(
             )
 
     # =====================================================
-    # CAST & CREW
+    # CAST
     # =====================================================
 
     st.divider()
@@ -970,7 +1154,7 @@ def render_movie_details(
         )
 
     # =====================================================
-    # WEB SERIES SEASONS
+    # SEASONS
     # =====================================================
 
     if content_type == "tv":
@@ -994,16 +1178,13 @@ def render_movie_details(
                     "season_number"
                 )
 
-                # Skip specials
                 if number == 0:
                     continue
 
                 name = (
                     season.get("name")
-                    or (
-                        "Season "
-                        + str(number)
-                    )
+                    or "Season "
+                    + str(number)
                 )
 
                 episodes = season.get(
