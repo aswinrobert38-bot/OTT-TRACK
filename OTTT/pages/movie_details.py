@@ -191,23 +191,16 @@ def get_india_providers(provider_data):
 # PROVIDER TITLE SEARCH
 # =========================================================
 
-def provider_search_url(
-    provider_name,
-    title
-):
+def provider_search_url(provider_name, title):
 
-    query = quote_plus(
-        title.strip()
-    )
-
-    name = provider_name.lower()
+    query = quote_plus(title.strip())
+    name = provider_name.lower().strip()
 
     # -----------------------------------------------------
     # NETFLIX
     # -----------------------------------------------------
 
     if "netflix" in name:
-
         return (
             "https://www.netflix.com/search?q="
             + query
@@ -222,14 +215,13 @@ def provider_search_url(
         or "amazon prime" in name
         or "amazon" in name
     ):
-
         return (
             "https://www.primevideo.com/search/ref=atv_nb_sr?phrase="
             + query
         )
 
     # -----------------------------------------------------
-    # JIOHOTSTAR / HOTSTAR
+    # JIOHOTSTAR
     # -----------------------------------------------------
 
     if (
@@ -237,7 +229,6 @@ def provider_search_url(
         or "jio hotstar" in name
         or "hotstar" in name
     ):
-
         return (
             "https://www.hotstar.com/in/search?q="
             + query
@@ -248,7 +239,6 @@ def provider_search_url(
     # -----------------------------------------------------
 
     if "sony liv" in name:
-
         return (
             "https://www.sonyliv.com/search/"
             + query
@@ -259,31 +249,8 @@ def provider_search_url(
     # -----------------------------------------------------
 
     if "zee5" in name:
-
         return (
             "https://www.zee5.com/search?q="
-            + query
-        )
-
-    # -----------------------------------------------------
-    # YOUTUBE
-    # -----------------------------------------------------
-
-    if "youtube" in name:
-
-        return (
-            "https://www.youtube.com/results?search_query="
-            + query
-        )
-
-    # -----------------------------------------------------
-    # APPLE TV
-    # -----------------------------------------------------
-
-    if "apple tv" in name:
-
-        return (
-            "https://tv.apple.com/in/search?term="
             + query
         )
 
@@ -291,8 +258,7 @@ def provider_search_url(
     # AHA
     # -----------------------------------------------------
 
-    if name == "aha" or "aha " in name:
-
+    if name == "aha" or name.startswith("aha "):
         return (
             "https://www.aha.video/search/"
             + query
@@ -303,7 +269,6 @@ def provider_search_url(
     # -----------------------------------------------------
 
     if "mx player" in name:
-
         return (
             "https://www.mxplayer.in/search/"
             + query
@@ -314,7 +279,6 @@ def provider_search_url(
     # -----------------------------------------------------
 
     if "lionsgate" in name:
-
         return (
             "https://www.lionsgateplay.com/search?q="
             + query
@@ -325,7 +289,6 @@ def provider_search_url(
     # -----------------------------------------------------
 
     if "discovery" in name:
-
         return (
             "https://www.discoveryplus.in/search?q="
             + query
@@ -336,7 +299,6 @@ def provider_search_url(
     # -----------------------------------------------------
 
     if "crunchyroll" in name:
-
         return (
             "https://www.crunchyroll.com/search?q="
             + query
@@ -347,7 +309,6 @@ def provider_search_url(
     # -----------------------------------------------------
 
     if "sun nxt" in name:
-
         return (
             "https://www.sunnxt.com/search/"
             + query
@@ -358,18 +319,32 @@ def provider_search_url(
     # -----------------------------------------------------
 
     if "manorama" in name:
-
         return (
             "https://www.manoramamax.com/search/"
             + query
         )
 
     # -----------------------------------------------------
-    # DEFAULT
+    # YOUTUBE
     # -----------------------------------------------------
 
-    return None
+    if "youtube" in name:
+        return (
+            "https://www.youtube.com/results?search_query="
+            + query
+        )
 
+    # -----------------------------------------------------
+    # APPLE TV
+    # -----------------------------------------------------
+
+    if "apple tv" in name:
+        return (
+            "https://tv.apple.com/in/search?term="
+            + query
+        )
+
+    return None
 
 # =========================================================
 # CLICKABLE OTT CARD
