@@ -192,16 +192,13 @@ PROVIDER_CONFIG = {
         ],
     },
 
-    "hotstar": {
-        "domain": "hotstar.com",
-        "search": (
-            "https://www.hotstar.com/in/search?q={query}"
-        ),
-        "patterns": [
-            r"https?://(?:www\.)?hotstar\.com/in/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+",
-        ],
-    },
-
+   "jiohotstar": {
+    "domain": "hotstar.com",
+    "search": (
+        "https://www.hotstar.com/in/search?q={query}"
+    ),
+    "patterns": [],
+},
     "sony liv": {
         "domain": "sonyliv.com",
         "search": (
@@ -594,19 +591,39 @@ def resolve_exact_ott_url(
 # RESOLVE FINAL OTT URL
 # =========================================================
 
-def get_final_ott_url(
-    provider,
-    title
-):
+def get_final_ott_url(provider, title):
 
     provider_name = provider.get(
         "name",
         ""
-    )
+    ).strip().lower()
 
-    # -----------------------------------------------------
-    # 1. Try exact provider title URL
-    # -----------------------------------------------------
+    # =====================================================
+    # JIOHOTSTAR
+    # =====================================================
+    #
+    # Do NOT use the external search-engine resolver here.
+    # Hotstar URLs can change and stale title URLs can cause
+    # BFF_102 / "Something went wrong".
+    #
+    if (
+        "jiohotstar" in provider_name
+        or "jio hotstar" in provider_name
+        or "hotstar" in provider_name
+    ):
+
+        query = quote_plus(
+            title.strip()
+        )
+
+        return (
+            "https://www.hotstar.com/in/search?q="
+            + query
+        )
+
+    # =====================================================
+    # OTHER PROVIDERS
+    # =====================================================
 
     exact_url = resolve_exact_ott_url(
         provider_name,
@@ -616,9 +633,9 @@ def get_final_ott_url(
     if exact_url:
         return exact_url
 
-    # -----------------------------------------------------
-    # 2. Provider search fallback
-    # -----------------------------------------------------
+    # =====================================================
+    # PROVIDER SEARCH FALLBACK
+    # =====================================================
 
     search_url = provider_search_url(
         provider_name,
@@ -628,9 +645,9 @@ def get_final_ott_url(
     if search_url:
         return search_url
 
-    # -----------------------------------------------------
-    # 3. TMDB / JustWatch fallback
-    # -----------------------------------------------------
+    # =====================================================
+    # TMDB / JUSTWATCH FALLBACK
+    # =====================================================
 
     return provider.get(
         "tmdb_link"
